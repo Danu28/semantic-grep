@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi Tools Guide — built-ins, custom tools, everything</title>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#11161d; --panel2:#151c25; --line:#26303c; --line2:#32404f;
+  --text:#d9e0e8; --muted:#8b98a5; --dim:#5e6a76; --accent:#7aa2ff;
+  --mono:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15.5px/1.55 var(--sans)}
+main{max-width:1180px;margin:0 auto;padding:28px 22px 80px}
+h1,h2,h3,h4{line-height:1.25}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.k{font-family:var(--mono);font-size:.9em;background:rgba(122,162,255,.09);border:1px solid rgba(122,162,255,.18);border-radius:5px;padding:.5px 5px;color:#a5c1ff;white-space:nowrap}
+pre.code{background:#0a0e13;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#c9d4df}
+pre.code b{color:#7ee787}
+nav{position:sticky;top:0;z-index:50;background:rgba(11,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .inner{max-width:1180px;margin:0 auto;padding:8px 22px;display:flex;align-items:center;gap:18px;overflow-x:auto;white-space:nowrap}
+nav .brand{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px}
+nav a{color:var(--muted);font-size:12.5px;padding:4px 2px;border-bottom:2px solid transparent}
+nav a:hover{color:var(--text);text-decoration:none;border-bottom-color:var(--accent)}
+.hero{border:1px solid var(--line2);border-radius:16px;background:radial-gradient(1000px 300px at 20% -10%,rgba(122,162,255,.13),transparent),radial-gradient(700px 260px at 90% 0%,rgba(63,185,80,.08),transparent),var(--panel);padding:30px 32px;margin:26px 0 12px}
+.hero h1{margin:0 0 6px;font-size:30px}
+.hero h1 .pi{color:var(--accent)}
+.hero .sub{color:var(--muted);max-width:840px;font-size:15.5px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{border:1px solid var(--line2);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted);background:var(--panel2)}
+section{margin:54px 0 0;scroll-margin-top:70px}
+h2{font-size:23px;display:flex;align-items:center;gap:12px;margin:0 0 4px}
+.secnum{font-family:var(--mono);font-size:13px;color:#0b0f14;background:var(--accent);border-radius:8px;padding:3px 9px;font-weight:800;flex:none}
+h2 .tag{font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:2px 10px}
+section>p.lede{color:var(--muted);max-width:880px;margin:6px 0 18px}
+h3{font-size:16.5px;margin:32px 0 8px;padding-left:10px;border-left:3px solid var(--accent)}
+h4{font-size:14px;margin:18px 0 6px;color:#b9c5d2}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:3px 0}
+.muted{color:var(--muted)} .dim{color:var(--dim)} .small{font-size:12.5px}
+.box{border:1px solid var(--line2);border-left:4px solid var(--c,#58a6ff);border-radius:10px;padding:11px 15px;margin:14px 0;background:var(--panel)}
+.box b.h{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--c,#58a6ff);margin-bottom:4px}
+.box.warn{--c:#e3b341;background:rgba(227,179,65,.05)}
+.box.sec{--c:#f85149;background:rgba(248,81,73,.05)}
+.box.ok{--c:#3fb950;background:rgba(63,185,80,.05)}
+.box.info{--c:#58a6ff;background:rgba(88,166,255,.05)}
+.fig{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px;margin:16px 0;overflow-x:auto}
+.fig .cap{font-size:12px;color:var(--dim);margin-bottom:12px;font-family:var(--mono)}
+.vflow{display:flex;flex-direction:column;align-items:stretch;min-width:560px;row-gap:8px}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0}
+.fork3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0}
+.n{border:1.5px solid var(--c,#7aa2ff);background:var(--bgc,rgba(122,162,255,.07));border-radius:11px;padding:9px 14px;line-height:1.4;font-size:13.5px}
+.n b{display:block;font-size:13px;color:var(--tc,#dbe6ff)}
+.n .s{color:var(--muted);font-size:12px;display:block}
+.n code{background:transparent;border:none;padding:0;color:inherit;font-size:11.5px;white-space:normal}
+.n.wide{flex:1 1 auto}
+.n.tall{min-height:64px;display:flex;flex-direction:column;justify-content:center}
+.n.dim{border-style:dashed;--c:#5e6a76;--bgc:rgba(94,106,118,.05)}
+.a-d{text-align:center;color:var(--dim);font-size:13px;line-height:13px;padding:2px 0;user-select:none}
+.a-d span{display:block;font-size:11px;color:var(--muted);line-height:13px}
+.nest{border-left:2px solid var(--line2);margin:6px 0 6px 14px;padding-left:14px}
+.nest > * + *{margin-top:8px}
+.stage{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:14px 0 6px}
+.c-tool{--c:#3fb950;--bgc:rgba(63,185,80,.08);--tc:#c9f5d2}
+.c-model{--c:#a5b4fc;--bgc:rgba(165,180,252,.07);--tc:#e3e8ff}
+.c-core{--c:#7aa2ff;--bgc:rgba(122,162,255,.07);--tc:#dbe6ff}
+.c-ext{--c:#bc8cff;--bgc:rgba(188,140,255,.08);--tc:#e8daff}
+.c-settings{--c:#58a6ff;--bgc:rgba(88,166,255,.07);--tc:#cfe0ff}
+.c-ui{--c:#f778ba;--bgc:rgba(247,120,186,.07);--tc:#ffd6ec}
+.c-kb{--c:#ff7b72;--bgc:rgba(255,123,114,.07);--tc:#ffd7d4}
+.c-env{--c:#8b98a5;--bgc:rgba(139,152,165,.08);--tc:#e4eaf0}
+.c-pkg{--c:#e3b341;--bgc:rgba(227,179,65,.07);--tc:#fae8bd}
+.c-ok{--c:#3fb950;--bgc:rgba(63,185,80,.08);--tc:#c9f5d2}
+.c-err{--c:#f85149;--bgc:rgba(248,81,73,.08);--tc:#ffd0ce}
+.c-warn{--c:#e3b341;--bgc:rgba(227,179,65,.07);--tc:#fae8bd}
+.lbl{text-align:center;color:var(--muted);font-size:11.5px;padding:2px 0;letter-spacing:.3px}
+.twrap{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:12px}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--panel2)}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(122,162,255,.03)}
+.tbl td b{color:#c9d4df}
+.tbl td code{white-space:normal}
+details.call{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:14px 0}
+details.call summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;color:#b9c5d2}
+details.call summary::marker{color:var(--accent)}
+details.call .body{padding:2px 18px 14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:13px 15px}
+.card h4{margin:0 0 6px;font-size:13.5px}
+.card h4 code{font-size:12px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.legend .n{font-size:11.5px;padding:3px 10px;border-radius:999px}
+kbd{font-family:var(--mono);font-size:11.5px;background:var(--panel2);border:1px solid var(--line2);border-bottom-width:2.5px;border-radius:6px;padding:1.5px 6px;color:#dbe4ee}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:1px 9px;color:var(--muted);margin:0 4px 4px 0;background:var(--panel2)}
+footer{margin-top:70px;border-top:1px solid var(--line);padding-top:18px;color:var(--dim);font-size:13px}
+.toc{columns:2;column-gap:36px}
+@media(max-width:900px){.duo{grid-template-columns:1fr}.fork3{grid-template-columns:1fr}.toc{columns:1}}
+.toc a{display:block;color:var(--muted);padding:3px 0;font-size:13.5px}
+.toc a b{color:var(--accent);font-family:var(--mono);font-size:11.5px;margin-right:8px}
+@media(max-width:760px){.fork{grid-template-columns:1fr}}
+.sig{background:#0a0e13;border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-family:var(--mono);font-size:12.5px;color:#e3e8ff;margin:8px 0}
+.sig .a{color:#7ee787}.sig .p{color:#f778ba}.sig .c{color:#8b98a5}
+</style>
+</head>
+<body>
+<nav><div class="inner">
+  <span class="brand">π tools</span>
+  <a href="#s0">Tool loop</a><a href="#s1">Built-ins</a><a href="#s2">Anatomy</a><a href="#s3">Interception</a>
+  <a href="#s4">Overrides</a><a href="#s5">Remote ops</a><a href="#s6">Truncation</a><a href="#s7">Rendering</a>
+  <a href="#s8">Dynamic tools</a><a href="#s9">State</a><a href="#s10">Recipes</a>
+</div></nav>
+
+<main>
+<div class="hero">
+  <h1><span class="pi">π</span> Tools — built-ins, custom tools &amp; how the loop really works</h1>
+  <p class="sub">Tools are the model’s hands: functions it can call mid-conversation (read files, run commands, hit your API). Pi ships eight built-ins and lets you register unlimited <b>custom tools</b> from extensions — with schema validation, interception events, custom TUI rendering, remote backends, and even tools that <i>load other tools</i>. This page is everything about that, as flow graphs. Distilled from the official docs (<code>extensions.md</code>, <code>usage.md</code>, <code>environment-variables.md</code>).</p>
+  <div class="chips">
+    <span class="chip">📄 standalone · works offline from <code>file://</code></span>
+    <span class="chip">🧭 no JS required</span>
+    <span class="chip">🎨 flow-graph style, same family as the customization guide</span>
+  </div>
+</div>
+
+<div class="box info"><b class="h">Color legend</b>
+<div class="legend">
+  <span class="n c-tool">tools / tool results</span><span class="n c-model">model / LLM</span><span class="n c-core">pi core</span>
+  <span class="n c-ext">extensions</span><span class="n c-ui">TUI rendering</span><span class="n c-settings">settings / CLI</span>
+  <span class="n c-kb">keybindings</span><span class="n c-env">environment</span><span class="n c-ok">ok</span><span class="n c-err">error/blocked</span><span class="n c-warn">decision</span>
+</div>
+<p class="small muted">Same palette as <code>pi-customization-guide.html</code> — these two documents are siblings; read the customization guide for discovery/loading/trust mechanics.</p></div>
+
+<details class="call"><summary>Contents (11 sections)</summary><div class="body toc">
+  <a href="#s0"><b>0</b>The tool loop — how a call becomes a result</a>
+  <a href="#s1"><b>1</b>Built-in tools &amp; selecting what’s active</a>
+  <a href="#s2"><b>2</b>Anatomy of a custom tool (<code>registerTool</code>)</a>
+  <a href="#s3"><b>3</b>Interception: <code>tool_call</code>, <code>tool_result</code> &amp; friends</a>
+  <a href="#s4"><b>4</b>Overriding built-ins</a>
+  <a href="#s5"><b>5</b>Remote execution &amp; spawn hooks</a>
+  <a href="#s6"><b>6</b>Truncation discipline</a>
+  <a href="#s7"><b>7</b>Custom rendering in the TUI</a>
+  <a href="#s8"><b>8</b>Dynamic tools — tools that load tools</a>
+  <a href="#s9"><b>9</b>State &amp; file-safety</a>
+  <a href="#s10"><b>10</b>Recipe gallery &amp; reference</a>
+</div></details>
+
+<section id="s0">
+<h2><span class="secnum">0</span>The tool loop — how a call becomes a result <span class="tag">the core mechanic</span></h2>
+<p class="lede">Everything tool-related is one cycle, repeated until the model stops calling tools. Pi orchestrates: it validates arguments against your schema, fires interception events, executes (in parallel when possible), hands the result back as context, and lets the model decide whether to call again.</p>
+
+<div class="fig"><div class="cap">FIG 0 · one assistant turn, expanded</div>
+<div class="vflow">
+  <div class="n c-model"><b>model streams a message… and emits a tool call</b><span class="s">a structured request: <code>toolName</code> + typed <code>arguments</code></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core"><b>pi validates &amp; preflights</b><span class="s">arguments checked against the tool's <code>parameters</code> schema (typebox) · optional <code>prepareArguments</code> ran first · sibling calls in one message preflight sequentially, then run concurrently</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>tool_execution_start → <b style="color:#ffd7d4">tool_call</b></b><span class="s">interception point #1 — inspect, mutate arguments, or <b>block</b> (permission gates live here)</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-tool"><b>execute() runs your code</b><span class="s">stream progress via <code>onUpdate</code> · watch <code>signal</code> for cancellation · can call <code>pi.exec</code>, hit APIs, spawn anything</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>tool_execution_update … → <b style="color:#ffd7d4">tool_result</b> → tool_execution_end</b><span class="s">interception point #2 — read, patch or replace the result (middleware chain)</span></div>
+  <div class="a-d">▼<span>result = content (text the LLM reads) + details (structured, for UI &amp; state) + flags</span></div>
+  <div class="n c-core"><b>result appended to context</b><span class="s">content shown to the model; details rendered by the tool row in the TUI (or stored for state)</span></div>
+  <div class="a-d">▼<span>does the model call another tool? (loop) — or answer?</span></div>
+  <div class="fork">
+    <div class="n c-model"><b>calls again</b><span class="s">cycle repeats; each tool call in a message may run in parallel with its siblings</span></div>
+    <div class="n c-ok"><b>no more calls</b><span class="s">turn ends → agent continues (follow-ups, compaction, next user prompt)</span></div>
+  </div>
+</div>
+</div>
+
+<p>Three layers decide what a tool is, in order of power:</p>
+<div class="fork3">
+  <div class="n c-settings tall"><b>selection</b><span class="s">settings <code>defaultTools</code> + CLI <code>--tools</code>/<code>--exclude-tools</code>/<code>--no-*</code> choose which of the built-ins start active</span></div>
+  <div class="n c-ext tall"><b>registration</b><span class="s">extensions call <code>pi.registerTool()</code>; SDK embeds via <code>customTools</code> — all appear in <code>pi.getAllTools()</code> with <code>sourceInfo</code> (<code>builtin</code> | <code>sdk</code> | extension source)</span></div>
+  <div class="n c-core tall"><b>execution</b><span class="s">the active tool set is what the model sees in its system prompt + API schemas each request</span></div>
+</div>
+
+<div class="box warn"><b class="h">One mental model to keep</b>
+<code>content</code> = what goes into the model's context (text). <code>details</code> = structured data that <i>does not</i> go to the model, used for TUI rendering and session state. Confusing the two is the most common custom-tool bug — see §2.</div>
+</section>
+
+<section id="s1">
+<h2><span class="secnum">1</span>Built-in tools &amp; selecting what’s active <span class="tag">the eight</span></h2>
+<p class="lede">Pi’s own tools cover the coding loop: inspect (read, grep, find, ls) and mutate (edit, write) files, run commands (bash, or powershell on Windows). You can reimplement or wrap any of them — and you can switch the active set per run.</p>
+
+<div class="fig"><div class="cap">FIG 1 · the built-in set and how to filter it</div>
+<div class="vflow">
+  <div class="n c-core center"><b>all configured tools</b><span class="s">built-ins (below) + everything extensions/SDK registered (active or not)</span></div>
+  <div class="a-d">▼<span>filters applied in this order…</span></div>
+  <div class="nest">
+    <div class="n c-settings"><b><code>defaultTools</code> (settings)</b><span class="s">initial built-ins when omitted → standard set. Project <code>defaultTools</code> replaces the global array. <code>[]</code> starts with none.</span></div>
+    <div class="n c-kb"><b><code>--tools &lt;list&gt;</code> / <code>-t</code></b><span class="s">strict allowlist — replaces everything, built-ins <i>and</i> extension tools</span></div>
+    <div class="n c-kb"><b><code>--exclude-tools &lt;list&gt;</code> / <code>-xt</code></b><span class="s">disable specific tools from the resulting set</span></div>
+    <div class="n c-kb"><b><code>--no-builtin-tools</code> / <code>-nbt</code> · <code>--no-tools</code> / <code>-nt</code></b><span class="s">drop built-ins (keep extension tools) · drop everything</span></div>
+  </div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok center"><b>active tool set → offered to the model</b><span class="s">re-shapeable at runtime by extensions: <code>pi.setActiveTools(names)</code> (§8)</span></div>
+</div>
+</div>
+
+<div class="twrap"><table class="tbl">
+<tr><th>Tool</th><th>Does</th><th>Notable behavior</th></tr>
+<tr><td><b>read</b></td><td>read files (text &amp; images)</td><td>truncated to 50KB/2000 lines by default; extension <code>read</code> replaces it</td></tr>
+<tr><td><b>edit</b> / <b>write</b></td><td>precise text replacement / create or overwrite files</td><td>both join a <b>per-file mutation queue</b> so parallel calls can’t clobber each other — custom file tools should too (§9)</td></tr>
+<tr><td><b>bash</b> / <b>powershell</b></td><td>run shell commands</td><td>choose per OS (<code>powershell</code> on Windows); spawns get <code>PI_SESSION_ID</code>, <code>PI_PROVIDER</code>, <code>PI_MODEL</code>… env (§5); supports remote ops &amp; spawn hooks</td></tr>
+<tr><td><b>grep</b> / <b>find</b> / <b>ls</b></td><td>search contents / walk files / list dirs</td><td>—</td></tr>
+</table></div>
+
+<div class="box ok"><b class="h">Where tools show up to the model</b>
+Active tools are advertised in the system prompt's <b>Available tools</b> section and as API schemas each request. Custom tools get a one-line entry there only if you set <code>promptSnippet</code>; without it they're callable but invisible in that list. <code>promptGuidelines</code> adds behavior bullets to the <b>Guidelines</b> section — while that tool is active.</div>
+</section>
+<section id="s2">
+<h2><span class="secnum">2</span>Anatomy of a custom tool <span class="tag">pi.registerTool</span></h2>
+<p class="lede">A tool is a plain object you hand to <code>pi.registerTool()</code> from an extension factory: metadata the model sees, a <b>typebox schema</b> its arguments are validated against, and an <code>execute()</code> that does the work and returns a result. That's the whole contract.</p>
+
+<div class="fig"><div class="cap">FIG 2 · the full registerTool contract</div>
+<div class="vflow">
+  <div class="n c-ext center"><b>pi.registerTool({…}) — from an extension factory</b><span class="s">metadata + schema + behavior, all in one object (fields below)</span></div>
+  <div class="a-d">▼<span>when the model calls it…</span></div>
+  <div class="n c-core center"><b>1 · prepareArguments(args)?</b><span class="s">optional — fix up <i>old</i> stored call shapes before validation (resumed sessions that predate a schema change); keep the public schema strict</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core center"><b>2 · validate against parameters</b><span class="s">typebox schema; use <code>StringEnum</code> from <code>@earendil-works/pi-ai</code> for string enums (Google-compatible — <code>Type.Union/Literal</code> breaks Google)</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>3 · tool_call event (can block — §3)</b></div>
+  <div class="a-d">▼</div>
+  <div class="n c-tool center"><b>4 · execute(toolCallId, params, signal, onUpdate, ctx)</b><span class="s">params are validated &amp; typed · signal ⇒ cancellation (Esc) · onUpdate ⇒ stream progress · ctx ⇒ cwd, ui, session, exec…</span></div>
+  <div class="a-d">▼<span>return value ↓ or throw ↑ (throw = failure, reported to the model)</span></div>
+  <div class="n c-tool center"><b>5 · result shape</b><span class="s"><code>{ content, details, isError?, usage?, terminate? }</code> — returning a value NEVER sets isError; only throwing does</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>6 · tool_result event (can modify — §3)</b></div>
+</div>
+</div>
+
+<h3>The fields</h3>
+<div class="twrap"><table class="tbl">
+<tr><th>Field</th><th>Purpose</th></tr>
+<tr><td><code>name</code> <span class="muted">required</span></td><td>unique id the model calls; must equal an existing name to <i>override</i> a built-in (§4)</td></tr>
+<tr><td><code>label</code></td><td>human name shown in the UI</td></tr>
+<tr><td><code>description</code> <span class="muted">required</span></td><td>shown to the LLM — what it does &amp; when. Your tool’s only documentation for the model.</td></tr>
+<tr><td><code>parameters</code></td><td>typebox <code>Type.Object</code> schema — validated before execute</td></tr>
+<tr><td><code>promptSnippet</code></td><td>one-liner for the system prompt’s “Available tools” list (omitted custom tools stay out of that list)</td></tr>
+<tr><td><code>promptGuidelines</code></td><td>bullets appended flat to “Guidelines” while the tool is active — <b>must name the tool</b> (“Use my_tool when…”, never “this tool”)</td></tr>
+<tr><td><code>prepareArguments</code></td><td>optional pre-validation migration hook (§ FIG 2 step 1)</td></tr>
+<tr><td><code>execute</code></td><td>the work (§ below)</td></tr>
+<tr><td><code>renderCall</code> / <code>renderResult</code> / <code>renderShell</code></td><td>optional custom TUI rendering (§7)</td></tr>
+</table></div>
+
+<h3>execute() signature</h3>
+<div class="sig"><span class="c">async </span>execute(<span class="p">toolCallId</span>: string, <span class="p">params</span>: T, <span class="p">signal</span>?: AbortSignal, <span class="p">onUpdate</span>?: (update) =&gt; void, <span class="p">ctx</span>: ToolContext) =&gt; <span class="a">Result</span></div>
+
+<div class="duo">
+<div>
+<h4>Result: what goes where</h4>
+<pre class="code">return {
+  content: [{ type: "text", text: "Done" }], // → the LLM's context
+  details: { items: [...] },                   // → TUI render + session state
+  usage: nested.usage,   // optional: nested LLM usage for accounting
+  terminate: true,       // optional: stop follow-up after this batch
+};</pre>
+<ul>
+<li><b>throw</b> an Error from execute ⇒ result marked <code>isError: true</code> and reported to the model. Returning a value never marks it an error.</li>
+<li><code>onUpdate</code> streams interim <code>{content, details}</code> while the tool runs (progress, partial results).</li>
+<li>Check <code>signal?.aborted</code> to exit cleanly on Esc.</li>
+<li><code>terminate: true</code> only ends the turn when <i>every</i> finalized result in the batch also returns it.</li>
+<li>Accept a path? Some models prefix <code>@</code> — built-ins strip a leading <code>@</code>; normalize it in custom path tools too.</li>
+</ul></div>
+<div>
+<h4>Minimal working tool</h4>
+<pre class="code">import { Type } from "typebox";
+import { StringEnum } from "@earendil-works/pi-ai";
+
+pi.registerTool({
+  name: "todo",
+  label: "Todo",
+  description: "List or add items to the project todo list",
+  promptSnippet: "List or add items in the project todo list",
+  parameters: Type.Object({
+    action: StringEnum(["list", "add"] as const),
+    text: Type.Optional(Type.String()),
+  }),
+  async execute(_id, params) {
+    if (params.action === "add") items.push(params.text!);
+    return {
+      content: [{ type: "text", text: "Added \"" + params.text + "\"" }],
+      details: { count: items.length },
+    };
+  },
+});</pre>
+</div></div>
+
+<div class="box sec"><b class="h">Schema rules that bite</b>
+String enums must use <code>StringEnum</code> from <code>@earendil-works/pi-ai</code> — <code>Type.Union</code>/<code>Type.Literal</code> breaks Google’s API. Export your params type (<code>export type MyToolInput = Static&lt;typeof schema&gt;</code>) so <code>tool_call</code> handlers can narrow it (§3).</div>
+</section>
+
+<section id="s3">
+<h2><span class="secnum">3</span>Interception — events around every tool <span class="tag">gates &amp; middleware</span></h2>
+<p class="lede">Extensions subscribe to tool events with <code>pi.on()</code>. Two of them are the power tools: <code>tool_call</code> can <b>block or rewrite</b> a call before it runs (permission gates, argument patching); <code>tool_result</code> can <b>read, patch or replace</b> the outcome (logging, enrichment, summarization).</p>
+
+<div class="fig"><div class="cap">FIG 3 · the event sequence around one tool execution</div>
+<div class="vflow">
+  <div class="n c-ext"><b>tool_execution_start</b></div>
+  <div class="a-d">▼</div>
+  <div class="n c-warn"><b>tool_call — interception point #1</b><span class="s">before the tool executes. <code>event.input</code> is mutable: earlier handlers' mutations flow to later handlers and into the real execution (no re-validation). Return <code>{ block: true, reason?, terminate? }</code> to refuse.</span></div>
+  <div class="a-d">▼<span>only if not blocked</span></div>
+  <div class="n c-tool"><b>execute() runs</b></div>
+  <div class="a-d">▼<span>while running…</span></div>
+  <div class="n c-ext"><b>tool_execution_update</b> <span class="s">fires as the tool streams progress (from onUpdate)</span></div>
+  <div class="a-d">▼<span>on completion…</span></div>
+  <div class="n c-warn"><b>tool_result — interception point #2</b><span class="s">after execution, before the result message. Handlers chain like middleware (extension load order), each seeing the latest result; return partial patches — <code>{ content?, details?, isError?, usage? }</code> — omitted fields keep current values.</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>tool_execution_end</b> <span class="s">then the toolResult message enters the session</span></div>
+</div>
+</div>
+
+<div class="duo">
+<div>
+<h4>Guard rails &amp; patching — tool_call</h4>
+<pre class="code">pi.on("tool_call", async (event, ctx) =&gt; {
+  // narrow for typing (built-ins need no type params)
+  if (isToolCallEventType("bash", event)) {
+    event.input.command = `source ~/.profile\n${event.input.command}`;
+    if (event.input.command.includes("rm -rf")) {
+      return { block: true, reason: "Dangerous", terminate: true };
+    }
+  }
+  // typed custom tools:
+  if (isToolCallEventType&lt;"todo", MyTodoInput&gt;("todo", event)) {
+    event.input.text = event.input.text?.trim();
+  }
+});</pre>
+<p class="small muted">Notes: <code>terminate</code> only applies to a blocked call and stops the agent early when every finalized result in the batch is terminating. <code>ctx.sessionManager</code> is current up to this call; in parallel mode you won't see sibling results yet (they're preflighted sequentially, executed concurrently).</p></div>
+<div>
+<h4>Middleware patching — tool_result</h4>
+<pre class="code">pi.on("tool_result", async (event, ctx) =&gt; {
+  if (isBashToolResult(event)) {
+    // event.details is typed: BashToolDetails
+    const resp = await fetch("https://…/summarize", {
+      method: "POST",
+      body: JSON.stringify({ content: event.content }),
+      signal: ctx.signal,        // Esc cancels your nested work too
+    });
+    if (resp.ok) {
+      return { content: [/* summarized */], isError: false };
+    }
+  }
+});</pre>
+<p class="small muted">Use <code>ctx.signal</code> for nested async so user cancellation propagates. In parallel mode <code>tool_result</code>/<code>tool_execution_end</code> may interleave in completion order; final messages are emitted in source order.</p></div></div>
+
+<h3>user_bash — intercepting the human’s <code>!</code> commands</h3>
+<p>Fires when the <i>user</i> runs <code>!</code>/<code>!!</code> (not the model). Three moves:</p>
+<ol>
+<li><b>Return custom operations</b> — <code>{ operations: remoteBashOps }</code> (e.g. run on SSH).</li>
+<li><b>Wrap pi’s local backend</b> — <code>createLocalBashOperations()</code> then delegate after a tweak (e.g. <code>source ~/.profile</code> first).</li>
+<li><b>Full replacement</b> — return <code>{ result: { output, exitCode, cancelled, truncated } }</code> directly.</li>
+</ol>
+<p class="small muted"><code>event.excludeFromContext</code> is true for <code>!!</code>; <code>event.cwd</code> carries the working dir. <code>user_bash</code> commands never receive the <code>PI_*</code> session env that model-driven <code>bash</code> gets.</p>
+</section>
+
+<section id="s4">
+<h2><span class="secnum">4</span>Overriding built-ins <span class="tag">same-name replacement</span></h2>
+<p class="lede">Register a tool whose <code>name</code> equals a built-in (<code>read</code>, <code>bash</code>, <code>edit</code>…) and you replace it — the classic pattern for read-only lockdowns, logging, or sandboxing. Interactive mode warns when this happens, so it's deliberate.</p>
+
+<div class="fig"><div class="cap">FIG 4 · what an override replaces (and what it inherits)</div>
+<div class="vflow">
+  <div class="n c-ext"><b>extension registers tool named <code>read</code> (etc.)</b><span class="s">via auto-discovery, settings <code>extensions</code>, or <code>pi -e ./tool-override.ts</code></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-warn"><b>name collision → built-in replaced</b><span class="s">interactive mode shows a warning · <code>--no-builtin-tools</code> also works if you want no built-ins at all alongside extension tools</span></div>
+  <div class="a-d">▼<span>execution &amp; rendering are resolved <b>independently per slot</b>…</span></div>
+  <div class="fork">
+    <div class="n c-tool"><b>execute: yours</b><span class="s">your code runs — wrap, gate, or reimplement. Must return the <b>exact result shape</b> incl. the built-in's <code>details</code> type (ReadToolDetails, BashToolDetails, GrepToolDetails, LsToolDetails, FindToolDetails…) — UI &amp; session logic depend on it</span></div>
+    <div class="n c-ui"><b>rendering: inherited unless you opt out</b><span class="s">omit <code>renderCall</code>/<code>renderResult</code> → built-in renderer used (syntax highlight, diffs…). Define one → only that slot is yours. Perfect for wrap-with-logging without redoing UI</span></div>
+  </div>
+  <div class="n c-warn" style="margin-top:10px"><b>not inherited: prompt metadata</b><span class="s"><code>promptSnippet</code>/<code>promptGuidelines</code> must be redefined on the override if you want them</span></div>
+</div>
+</div>
+
+<div class="box ok"><b class="h">Example in the wild</b>
+<code>examples/extensions/tool-override.ts</code> replaces <code>read</code> with a logging + access-control wrapper; <code>protected-paths.ts</code> blocks writes to sensitive files; <code>dirty-repo-guard.ts</code> and <code>git-checkpoint.ts</code> wrap git state before/after work. Try <code>pi -e ./tool-override.ts</code> to feel the warning + swap.</div>
+</section>
+<section id="s5">
+<h2><span class="secnum">5</span>Remote execution &amp; spawn hooks <span class="tag">take tools elsewhere</span></h2>
+<p class="lede">Every built-in is built on a thin <b>operations</b> seam. Swap the operations and the tool runs against SSH, a container, a sandbox — without the model or the UI knowing. There are also factory helpers that return ready-made tools, and hooks to tweak how commands spawn.</p>
+
+<div class="fig"><div class="cap">FIG 5 · the operations seam</div>
+<div class="vflow">
+  <div class="n c-core center"><b>built-in tool = fixed logic + pluggable operations</b><span class="s">e.g. <code>read</code> = path logic + <code>readFile(path)</code>/<code>access(path)</code> ops; <code>bash</code> = spawn logic + BashOperations</span></div>
+  <div class="a-d">▼<span>two ways to use the seam…</span></div>
+  <div class="fork">
+    <div class="n c-ext tall"><b>factory + register</b><span class="s"><code>createReadTool(cwd, { operations })</code>, <code>createBashTool(cwd, {…})</code>… then <code>pi.registerTool()</code> the result (maybe swapped per-run by a flag)</span></div>
+    <div class="n c-ext tall"><b>reuse the local backend</b><span class="s"><code>createLocalBashOperations()</code> for <code>user_bash</code> — no need to reimplement process spawning/termination</span></div>
+  </div>
+  <div class="a-d">▼</div>
+  <div class="n c-pkg wide"><b>operations interfaces per tool</b><span class="s"><code>ReadOperations</code> · <code>WriteOperations</code> · <code>EditOperations</code> · <code>BashOperations</code> · <code>PowerShellOperations</code> · <code>LsOperations</code> · <code>GrepOperations</code> · <code>FindOperations</code> — implement the few methods; wire each to SSH / Docker / HTTP</span></div>
+</div>
+</div>
+
+<h3>spawnHook — adjust every command before it runs</h3>
+<pre class="code">import { createBashTool } from "@earendil-works/pi-coding-agent";
+
+const bashTool = createBashTool(cwd, {
+  spawnHook: ({ command, cwd, env }) =&gt; ({
+    command: `source ~/.profile\n${command}`,   // always source your profile
+    cwd: `/mnt/sandbox${cwd}`,                   // jail into a sandbox
+    env: { ...env, CI: "1" },
+  }),
+});</pre>
+<div class="box ok"><b class="h">Session env &amp; spawnHook ordering</b>
+<code>createBashTool()</code>/<code>createPowerShellTool()</code> inject <code>PI_SESSION_ID</code>, <code>PI_SESSION_FILE</code>, <code>PI_PROVIDER</code>, <code>PI_MODEL</code>, <code>PI_REASONING_LEVEL</code> into each command <b>before</b> the hook runs, so the hook sees them in <code>env</code>. Opt out with <code>exposeSessionEnvironment: false</code>. (Full story in the env-vars section of the customization guide.)</div>
+<p class="small muted">Working example: <code>examples/extensions/ssh.ts</code> routes read/bash/etc. over SSH behind an <code>--ssh</code> flag; <code>bash-spawn-hook.ts</code> is the minimal hook demo; sandbox/ and gondolin/ show container sandboxing setups.</p>
+</section>
+
+<section id="s6">
+<h2><span class="secnum">6</span>Truncation discipline <span class="tag">the #1 rule</span></h2>
+<p class="lede">Custom tools <b>must</b> truncate their output. Pi’s hard ceiling is <b>50KB (~10k tokens) or 2000 lines, whichever comes first</b> — blow past it and you risk context-overflow errors, compaction failures, and a degrading model. Pi exports the exact utilities it uses, so there's no excuse to hand-roll.</p>
+
+<div class="fig"><div class="cap">FIG 6 · the truncation flow every output-producing tool should follow</div>
+<div class="vflow">
+  <div class="n c-tool"><b>capture raw output</b><span class="s">run the command / read the source</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-warn"><b>choose a head or tail strategy</b><span class="s"><code>truncateHead()</code> when the beginning matters (file reads, search hits) · <code>truncateTail()</code> when the end matters (logs, command output) · <code>truncateLine()</code> for a single huge line</span></div>
+  <div class="a-d">▼<span>truncate with the same limits pi uses</span></div>
+  <div class="n c-tool"><b>apply</b><span class="s"><code>truncateHead(output, { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES })</code> → <code>{ content, truncated, outputLines, totalLines, outputBytes, totalBytes }</code></span></div>
+  <div class="a-d">▼<span>if truncated…</span></div>
+  <div class="n c-tool"><b>park the full output + tell the model</b><span class="s">write the full text to a temp file (<code>writeTempFile</code>) and append a note: <code>[Output truncated: N of M lines (A of B). Full output saved to: &lt;file&gt;]</code></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok"><b>return the bounded result</b><span class="s">and document the limits in your tool description</span></div>
+</div>
+</div>
+
+<pre class="code">import { truncateHead, formatSize, writeTempFile,
+         DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES } from "@earendil-works/pi-coding-agent";
+
+const raw = await runCommand();
+const t = truncateHead(raw, { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES });
+let text = t.content;
+if (t.truncated) {
+  const f = writeTempFile(raw);
+  text += `\n\n[Output truncated: ${t.outputLines}/${t.totalLines} lines` +
+          ` (${formatSize(t.outputBytes)}/${formatSize(t.totalBytes)}). Full output saved to: ${f}]`;
+}
+return { content: [{ type: "text", text }], details: {} };</pre>
+<p class="small muted">Copy-paste example: <code>examples/extensions/truncated-tool.ts</code> wraps <code>rg</code> properly. <code>formatSize</code> gives human “50KB / 1.5MB” strings.</p>
+</section>
+
+<section id="s7">
+<h2><span class="secnum">7</span>Custom rendering in the TUI <span class="tag">renderCall / renderResult</span></h2>
+<p class="lede">Tool rows in the transcript are just components. Give your tool <code>renderCall</code> and/or <code>renderResult</code> and you control exactly what the user sees while the tool runs and after it settles — while the model still reads plain <code>content</code>. Rendering never touches the LLM; it's pure UI.</p>
+
+<div class="fig"><div class="cap">FIG 7 · how a tool row is drawn</div>
+<div class="vflow">
+  <div class="n c-tool"><b>call begins → renderCall(args, theme, context)</b><span class="s">header line: tool name + the arguments, styled</span></div>
+  <div class="a-d">▼<span>streaming updates…</span></div>
+  <div class="n c-tool"><b>renderResult(result, {expanded,isPartial}, theme, context)</b><span class="s">called repeatedly as <code>onUpdate</code> arrives (<code>isPartial: true</code>) and finally when settled; <code>expanded</code> = user pressed <kbd>ctrl+o</kbd></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ui wide"><b>wrapped in a themed Box (padding/background) — unless <code>renderShell: "self"</code></b><span class="s">self-shell = you own framing &amp; background (big previews that must stay visually stable)</span></div>
+  <div class="a-d">▼<span>slot renderer missing or throws → graceful fallback</span></div>
+  <div class="n c-ok"><b>fallbacks</b><span class="s">renderCall → tool name only · renderResult → raw text of <code>content</code></span></div>
+</div>
+</div>
+
+<div class="duo">
+<div>
+<h4>context — what your renderers receive</h4>
+<ul>
+<li><code>args</code> — current tool-call arguments (read here, don't copy into state)</li>
+<li><code>state</code> — row-local object <b>shared</b> across renderCall &amp; renderResult</li>
+<li><code>lastComponent</code> — previous component for this slot (reuse &amp; mutate in place)</li>
+<li><code>invalidate()</code> — request a re-render of this row</li>
+<li><code>toolCallId</code>, <code>cwd</code>, <code>executionStarted</code>, <code>argsComplete</code>, <code>isPartial</code>, <code>expanded</code>, <code>showImages</code>, <code>isError</code></li>
+</ul></div>
+<div>
+<h4>Patterns &amp; best practice</h4>
+<ul>
+<li>Use <code>Text</code> with padding <code>(0,0)</code>; the default Box handles padding.</li>
+<li><code>\n</code> for multi-line; keep the collapsed view compact; add detail when <code>expanded</code>.</li>
+<li>Handle <code>isPartial</code> (e.g. a “Processing…” line) for streaming feedback.</li>
+<li>Empty slot? Return an empty <code>Container</code>.</li>
+<li>Color via <code>theme.fg(token, text)</code> — semantic theme tokens, never hardcoded colors.</li>
+<li>Keybinding hints that respect the user's config: <code>keyHint("app.tools.expand", "to expand")</code> (also <code>keyText</code>, <code>rawKeyHint</code>).</li>
+</ul></div></div>
+
+<pre class="code">renderResult(result, { expanded, isPartial }, theme, context) {
+  if (isPartial) return new Text(theme.fg("warning", "Processing…"), 0, 0);
+  if (result.details?.error) return new Text(theme.fg("error", `Error: ${result.details.error}`), 0, 0);
+  let text = theme.fg("success", "✓ Done");
+  if (expanded &amp;&amp; result.details?.items)
+    for (const item of result.details.items) text += "\n  " + theme.fg("dim", item);
+  return new Text(text, 0, 0);
+}</pre>
+<p class="small muted">Components come from <code>@earendil-works/pi-tui</code> (Text, Box, Container…). Full component API lives in <code>docs/tui.md</code>; see <code>examples/extensions/built-in-tool-renderer.ts</code> and <code>tool-execution.ts</code> (source) for how rows compose. Built-in override renderers inherit per slot (§4).</p>
+</section>
+<section id="s8">
+<h2><span class="secnum">8</span>Dynamic tools — tools that load tools <span class="tag">scale past the prompt</span></h2>
+<p class="lede">Register a thousand tools? The system prompt can’t hold them. Instead: register everything, keep a small set active, and let a <b>loader tool</b> switch on more tools mid-task by editing the active set. Pi detects additive changes, records them on the loader's result, and (on capable models) uses <b>native deferred loading</b> so the prompt prefix stays cacheable.</p>
+
+<div class="fig"><div class="cap">FIG 8 · the loader pattern</div>
+<div class="vflow">
+  <div class="n c-ext"><b>register EVERY tool</b><span class="s"><code>pi.registerTool()</code> for all — they're now in <code>pi.getAllTools()</code> but not yet offered to the model</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>keep only a few active</b><span class="s">loader stays active (e.g. <code>search_tools</code>); the rest inactive (e.g. <code>lookup_weather</code>, <code>search_issues</code>)</span></div>
+  <div class="a-d">▼<span>task needs a dormant capability → model calls the loader</span></div>
+  <div class="n c-ext"><b>loader runs: pi.setActiveTools([…current, …matching])</b><span class="s">additive only — don't remove active tools in the same call. Names must already be registered (unknown ones ignored). Match by keyword, BM25, embeddings, remote catalog…</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core"><b>pi records the additions on the loader's tool result</b><span class="s">applied before the next model request — no special return needed; the active-tool change IS the signal</span></div>
+  <div class="a-d">▼<span>delivery strategy depends on the model…</span></div>
+  <div class="fork">
+    <div class="n c-ok tall"><b>native deferred loading</b><span class="s">Anthropic Sonnet/Opus/Fable ≥ 4.5 (no Haiku): <code>defer_loading</code> + <code>tool_reference</code> at the load point · OpenAI <code>gpt-5.4</code>+: completed client <code>tool_search_call</code>/<code>tool_search_output</code>. Stable prompt prefix preserved</span></div>
+    <div class="n c-warn tall"><b>fallback (all other models)</b><span class="s">pi resends the full active list next request — works everywhere, but adding definitions may invalidate the provider's cached prompt prefix</span></div>
+  </div>
+</div>
+</div>
+
+<div class="box warn"><b class="h">Caching caveats that decide your design</b>
+<ul><li>Removals work but never use deferred loading — prefer keeping the loader active and only <b>adding</b>.</li>
+<li>A tool with <code>promptSnippet</code>/<code>promptGuidelines</code> triggers a system-prompt rebuild when activated, which can break the prefix cache even on deferred-capable models → lazily loaded tools should rely on their <code>description</code> and skip prompt metadata.</li>
+<li>Verified proxies/custom models can opt in per-provider: <code>compat.supportsToolReferences: true</code> (anthropic-messages) or <code>compat.supportsToolSearch: true</code> (openai-responses / openai-codex-responses). Leave off unless the endpoint truly supports it.</li>
+</ul></div>
+
+<h3>Managing the active set from anywhere</h3>
+<div class="duo">
+<div><pre class="code">pi.getActiveTools(); // ["read","bash",…]
+
+pi.getAllTools(); // full metadata: name, description,
+//   parameters, promptGuidelines, sourceInfo
+// sourceInfo.source: "builtin" | "sdk" | extension source
+
+// read-only mode:
+pi.setActiveTools(["read", "bash"]);
+// add without dropping anything:
+pi.setActiveTools([...new Set([...active, "my_tool"])]);</pre></div>
+<div>
+<p class="muted">These work for built-ins too, so a command or another extension can switch modes at runtime. Tools that enter via the SDK (<code>createAgentSession({ customTools })</code>) report <code>source: "sdk"</code>. Works with every model — only the delivery mechanism differs (§ FIG 8).</p>
+<p class="small">Full search-tool example: <code>examples/extensions/dynamic-tools.ts</code>. The two-games-in-one demo (<code>snake.ts</code> / <code>space-invaders.ts</code>) also shows selective activation.</p></div></div>
+</section>
+
+<section id="s9">
+<h2><span class="secnum">9</span>State &amp; file-safety <span class="tag">things that bite in parallel</span></h2>
+<p class="lede">Two failure modes await every serious custom tool — and pi ships the remedies. One: multiple tools editing the same file in parallel can silently lose writes. Two: your tool's state must survive forks, resumes and reloads.</p>
+
+<h3>withFileMutationQueue — join the same per-file queue as edit/write</h3>
+<div class="fig"><div class="cap">FIG 9 · the lost-update race, and the fix</div>
+<div class="vflow">
+  <div class="n c-err"><b>the race</b><span class="s">tool calls run in parallel by default. Custom tool A reads <code>foo.ts</code> while built-in <code>edit</code> also changes <code>foo.ts</code> in the same turn → both computed from the original → whichever write lands last overwrites the other's change. Silently.</span></div>
+  <div class="a-d">▼<span>the fix</span></div>
+  <div class="n c-ok"><b>queue the whole mutation window on the real file path</b><span class="s"><code>withFileMutationQueue(absolutePath, async () =&gt; { …read-modify-write… })</code> — same queue built-in edit/write use, so A and edit serialize</span></div>
+  <div class="a-d">▼<span>rules…</span></div>
+  <div class="n c-core"><b>pass the resolved path, not the raw argument</b><span class="s">resolve absolute relative to <code>ctx.cwd</code> first. Existing files are canonicalized via <code>realpath()</code> (symlink aliases share one queue); new files fall back to the resolved absolute path. Queue read-modify-write logic, not just the final write.</span></div>
+</div>
+</div>
+
+<h3>State: session-aware, branch-safe</h3>
+<p>Where does your tool keep data between calls?</p>
+<div class="fork3">
+<div class="n c-core tall"><b>in-memory variables</b><span class="s">fine within one run — but lost on reload, resume, fork, or process exit</span></div>
+<div class="n c-ext tall"><b>tool-result <code>details</code></b><span class="s">the docs' rule: store state in <code>details</code> so it rides the session — <b>branches carry it correctly</b>; rebuild on <code>session_start</code> by scanning the branch's <code>toolResult</code> messages</span></div>
+<div class="n c-tool tall"><b>multiple tools, one state</b><span class="s">one extension closure = shared state between <code>db_connect</code>/<code>db_query</code>/<code>db_close</code>; clean up on <code>session_shutdown</code> (close the pool!)</span></div>
+</div>
+
+<pre class="code">// State that survives forks &amp; resumes: snapshot it into details each call…
+let items: string[] = [];
+pi.on("session_start", async (_ev, ctx) =&gt; {          // …and rebuild from the branch
+  items = [];
+  for (const e of ctx.sessionManager.getBranch())
+    if (e.type === "message" &amp;&amp; e.message.role === "toolResult"
+        &amp;&amp; e.message.toolName === "my_tool")
+      items = e.message.details?.items ?? [];
+});
+// …then in execute: return { content: [/*…*/], details: { items: [...items] } }</pre>
+
+<div class="box info"><b class="h">Usage accounting for nested LLM calls</b>
+If your tool calls an LLM internally, return the combined <code>usage</code> on the result — pi persists it on the tool result and folds it into footer totals, <code>/session</code>, and RPC totals. <code>tool_result</code> handlers can inspect or replace it.</div>
+</section>
+<section id="s10">
+<h2><span class="secnum">10</span>Recipe gallery &amp; reference <span class="tag">make it yours</span></h2>
+<p class="lede">Real working examples ship with pi in <code>examples/extensions/</code> — each one demonstrates a specific tool technique. Run any with <code>pi -e examples/extensions/&lt;file&gt;.ts</code>.</p>
+
+<h3>What you can build — by pattern</h3>
+<div class="twrap"><table class="tbl">
+<tr><th>Pattern</th><th>What it is</th><th>Example(s)</th></tr>
+<tr><td><b>Permission gates</b></td><td><code>tool_call</code> handler that confirms or blocks dangerous actions before execution</td><td><code>permission-gate.ts</code> · <code>confirm-destructive.ts</code> · <code>timed-confirm.ts</code> · <code>protected-paths.ts</code></td></tr>
+<tr><td><b>Guards &amp; checkpoints</b></td><td>pre/post hooks around edits or git operations</td><td><code>dirty-repo-guard.ts</code> · <code>git-checkpoint.ts</code> · <code>git-merge-and-resolve.ts</code></td></tr>
+<tr><td><b>Wrapped / replaced built-ins</b></td><td>same-name override adding logging, access control, or remote routing</td><td><code>tool-override.ts</code> (read) · <code>ssh.ts</code> (ops over SSH) · <code>bash-spawn-hook.ts</code></td></tr>
+<tr><td><b>Domain tools (model-callable APIs)</b></td><td>your service exposed as typed, validated tools</td><td><code>tools.ts</code> · <code>qna.ts</code> · <code>todo.ts</code> · <code>structured-output.ts</code> (uses <code>terminate</code>)</td></tr>
+<tr><td><b>Interactive / wizard tools</b></td><td>tools that ask the user mid-task via <code>ctx.ui</code></td><td><code>question.ts</code> · <code>questionnaire.ts</code> · <code>interactive-shell.ts</code></td></tr>
+<tr><td><b>Long-running / streaming</b></td><td>stream progress with <code>onUpdate</code>, stay abort-aware</td><td><code>truncated-tool.ts</code> (proper rg wrapper) · <code>file-trigger.ts</code></td></tr>
+<tr><td><b>Dynamic tool loading</b></td><td>small active set + a loader that enables more</td><td><code>dynamic-tools.ts</code> · <code>kimi-deferred-tools.ts</code></td></tr>
+<tr><td><b>Background jobs / events</b></td><td>tools reacting to the world, not just prompts</td><td><code>file-trigger.ts</code> · <code>event-bus.ts</code> · <code>notify.ts</code></td></tr>
+<tr><td><b>Stateful utilities</b></td><td>connection pools &amp; shared state across tools</td><td><code>db_*</code> pattern (docs §Multiple Tools) · <code>bookmark.ts</code></td></tr>
+<tr><td><b>Just for fun</b></td><td>prove the loop is fully yours</td><td><code>snake.ts</code> · <code>space-invaders.ts</code> · <code>tic-tac-toe.ts</code> · <code>doom-overlay/</code></td></tr>
+</table></div>
+
+<h3>Cheat reference</h3>
+<div class="duo">
+<div>
+<h4>Imports you'll use</h4>
+<ul>
+<li><code>@earendil-works/pi-coding-agent</code> — <code>ExtensionAPI</code>, <code>isToolCallEventType</code>, <code>isBashToolResult</code> + per-tool result types, <code>withFileMutationQueue</code>, truncation utils (<code>truncateHead</code>/<code>truncateTail</code>/<code>truncateLine</code>/<code>formatSize</code>/<code>DEFAULT_MAX_BYTES</code>/<code>DEFAULT_MAX_LINES</code>), tool factories (<code>createReadTool</code>, <code>createBashTool</code>…), <code>createLocalBashOperations</code>, <code>keyHint</code>/<code>keyText</code>/<code>rawKeyHint</code></li>
+<li><code>typebox</code> — <code>Type</code> for schemas</li>
+<li><code>@earendil-works/pi-ai</code> — <code>StringEnum</code></li>
+<li><code>@earendil-works/pi-tui</code> — <code>Text</code>, <code>Box</code>, <code>Container</code>…</li>
+</ul></div>
+<div>
+<h4>Constants &amp; defaults</h4>
+<ul>
+<li>Output ceiling: <b>50KB / 2000 lines</b> (exported as <code>DEFAULT_MAX_BYTES</code>/<code>DEFAULT_MAX_LINES</code>)</li>
+<li>Built-ins: <code>read bash powershell edit write grep find ls</code></li>
+<li>Namespaced keybinding ids for hints: <code>app.tools.expand</code>, <code>app.session.rename</code>, <code>tui.select.confirm</code>, <code>tui.input.tab</code>…</li>
+<li>CLI: <code>-t</code>/<code>--tools</code> · <code>-xt</code>/<code>--exclude-tools</code> · <code>-nt</code>/<code>--no-tools</code> · <code>-nbt</code>/<code>--no-builtin-tools</code></li>
+</ul></div></div>
+
+<h3>Event names you can hook (tool-focused)</h3>
+<p><span class="pill">tool_execution_start</span><span class="pill">tool_call</span><span class="pill">tool_execution_update</span><span class="pill">tool_result</span><span class="pill">tool_execution_end</span><span class="pill">user_bash</span><span class="pill">session_shutdown</span><span class="pill">session_start</span></p>
+
+<h3>Where to go deeper</h3>
+<ul>
+<li><code>docs/extensions.md</code> — Custom Tools, Tool Definition, Overriding, Remote Execution, Output Truncation, Multiple Tools, Custom Rendering, Dynamic Tool Loading (§§ 1879+).</li>
+<li><code>docs/tui.md</code> — full component API for renderers; <code>docs/keybindings.md</code> — keybinding ids; <code>docs/environment-variables.md</code> — <code>PI_*</code> shell env; <code>docs/sdk.md</code> — embedding pi with <code>customTools</code>.</li>
+<li>Built-in implementations (match their result shapes when overriding): <code>packages/coding-agent/src/core/tools/{read,bash,powershell,edit,write,grep,find,ls}.ts</code>.</li>
+<li>This page is a sibling of <code>pi-customization-guide.html</code> — discovery/trust/settings mechanics live there.</li>
+</ul>
+
+<div class="box ok"><b class="h">The 30-second summary</b>
+<ol>
+<li>Register tools with <code>pi.registerTool()</code>: schema (<code>Type</code>) + metadata (<code>description</code>/<code>promptSnippet</code>) + <code>execute()</code> returning <code>{content, details}</code>.</li>
+<li>Guard &amp; patch around every call with <code>tool_call</code> (block/mutate) and <code>tool_result</code> (middleware patches).</li>
+<li>Mutate files through <code>withFileMutationQueue</code>; truncate output to 50KB/2000 lines; keep state in <code>details</code>.</li>
+<li>Override built-ins by name (renderers inherit per slot); route them remotely through <b>operations</b>; <code>renderCall</code>/<code>renderResult</code> for bespoke UI; <code>setActiveTools</code> for tool-scale.</li>
+</ol></div>
+</section>
+
+<p class="small dim center" style="margin-top:44px">…</p>
+</main>
+</body>
+</html>

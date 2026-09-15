@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi Extensions Guide — the TypeScript escape hatch</title>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#11161d; --panel2:#151c25; --line:#26303c; --line2:#32404f;
+  --text:#d9e0e8; --muted:#8b98a5; --dim:#5e6a76; --accent:#7aa2ff;
+  --mono:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15.5px/1.55 var(--sans)}
+main{max-width:1180px;margin:0 auto;padding:28px 22px 80px}
+h1,h2,h3,h4{line-height:1.25}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.k{font-family:var(--mono);font-size:.9em;background:rgba(122,162,255,.09);border:1px solid rgba(122,162,255,.18);border-radius:5px;padding:.5px 5px;color:#a5c1ff;white-space:nowrap}
+pre.code{background:#0a0e13;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#c9d4df}
+pre.code b{color:#7ee787}
+nav{position:sticky;top:0;z-index:50;background:rgba(11,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .inner{max-width:1180px;margin:0 auto;padding:8px 22px;display:flex;align-items:center;gap:18px;overflow-x:auto;white-space:nowrap}
+nav .brand{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px}
+nav a{color:var(--muted);font-size:12.5px;padding:4px 2px;border-bottom:2px solid transparent}
+nav a:hover{color:var(--text);text-decoration:none;border-bottom-color:var(--accent)}
+.hero{border:1px solid var(--line2);border-radius:16px;background:radial-gradient(1000px 300px at 20% -10%,rgba(122,162,255,.13),transparent),radial-gradient(700px 260px at 90% 0%,rgba(63,185,80,.08),transparent),var(--panel);padding:30px 32px;margin:26px 0 12px}
+.hero h1{margin:0 0 6px;font-size:30px}
+.hero h1 .pi{color:var(--accent)}
+.hero .sub{color:var(--muted);max-width:840px;font-size:15.5px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{border:1px solid var(--line2);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted);background:var(--panel2)}
+section{margin:54px 0 0;scroll-margin-top:70px}
+h2{font-size:23px;display:flex;align-items:center;gap:12px;margin:0 0 4px}
+.secnum{font-family:var(--mono);font-size:13px;color:#0b0f14;background:var(--accent);border-radius:8px;padding:3px 9px;font-weight:800;flex:none}
+h2 .tag{font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:2px 10px}
+section>p.lede{color:var(--muted);max-width:880px;margin:6px 0 18px}
+h3{font-size:16.5px;margin:32px 0 8px;padding-left:10px;border-left:3px solid var(--accent)}
+h4{font-size:14px;margin:18px 0 6px;color:#b9c5d2}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:3px 0}
+.muted{color:var(--muted)} .dim{color:var(--dim)} .small{font-size:12.5px}
+.box{border:1px solid var(--line2);border-left:4px solid var(--c,#58a6ff);border-radius:10px;padding:11px 15px;margin:14px 0;background:var(--panel)}
+.box b.h{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--c,#58a6ff);margin-bottom:4px}
+.box.warn{--c:#e3b341;background:rgba(227,179,65,.05)}
+.box.sec{--c:#f85149;background:rgba(248,81,73,.05)}
+.box.ok{--c:#3fb950;background:rgba(63,185,80,.05)}
+.box.info{--c:#58a6ff;background:rgba(88,166,255,.05)}
+.fig{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px;margin:16px 0;overflow-x:auto}
+.fig .cap{font-size:12px;color:var(--dim);margin-bottom:12px;font-family:var(--mono)}
+.vflow{display:flex;flex-direction:column;align-items:stretch;min-width:560px;row-gap:8px}
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0}
+.fork3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0}
+.n{border:1.5px solid var(--c,#7aa2ff);background:var(--bgc,rgba(122,162,255,.07));border-radius:11px;padding:9px 14px;line-height:1.4;font-size:13.5px}
+.n b{display:block;font-size:13px;color:var(--tc,#dbe6ff)}
+.n .s{color:var(--muted);font-size:12px;display:block}
+.n code{background:transparent;border:none;padding:0;color:inherit;font-size:11.5px;white-space:normal}
+.n.wide{flex:1 1 auto}
+.n.tall{min-height:64px;display:flex;flex-direction:column;justify-content:center}
+.n.dim{border-style:dashed;--c:#5e6a76;--bgc:rgba(94,106,118,.05)}
+.a-d{text-align:center;color:var(--dim);font-size:13px;line-height:13px;padding:2px 0;user-select:none}
+.a-d span{display:block;font-size:11px;color:var(--muted);line-height:13px}
+.nest{border-left:2px solid var(--line2);margin:6px 0 6px 14px;padding-left:14px}
+.nest > * + *{margin-top:8px}
+.stage{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:14px 0 6px}
+.c-tool{--c:#3fb950;--bgc:rgba(63,185,80,.08);--tc:#c9f5d2}
+.c-model{--c:#a5b4fc;--bgc:rgba(165,180,252,.07);--tc:#e3e8ff}
+.c-core{--c:#7aa2ff;--bgc:rgba(122,162,255,.07);--tc:#dbe6ff}
+.c-ext{--c:#bc8cff;--bgc:rgba(188,140,255,.08);--tc:#e8daff}
+.c-settings{--c:#58a6ff;--bgc:rgba(88,166,255,.07);--tc:#cfe0ff}
+.c-ui{--c:#f778ba;--bgc:rgba(247,120,186,.07);--tc:#ffd6ec}
+.c-kb{--c:#ff7b72;--bgc:rgba(255,123,114,.07);--tc:#ffd7d4}
+.c-env{--c:#8b98a5;--bgc:rgba(139,152,165,.08);--tc:#e4eaf0}
+.c-pkg{--c:#e3b341;--bgc:rgba(227,179,65,.07);--tc:#fae8bd}
+.c-ok{--c:#3fb950;--bgc:rgba(63,185,80,.08);--tc:#c9f5d2}
+.c-err{--c:#f85149;--bgc:rgba(248,81,73,.08);--tc:#ffd0ce}
+.c-warn{--c:#e3b341;--bgc:rgba(227,179,65,.07);--tc:#fae8bd}
+.lbl{text-align:center;color:var(--muted);font-size:11.5px;padding:2px 0;letter-spacing:.3px}
+.twrap{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:12px}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--panel2)}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(122,162,255,.03)}
+.tbl td b{color:#c9d4df}
+.tbl td code{white-space:normal}
+details.call{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:14px 0}
+details.call summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;color:#b9c5d2}
+details.call summary::marker{color:var(--accent)}
+details.call .body{padding:2px 18px 14px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:13px 15px}
+.card h4{margin:0 0 6px;font-size:13.5px}
+.card h4 code{font-size:12px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.legend .n{font-size:11.5px;padding:3px 10px;border-radius:999px}
+kbd{font-family:var(--mono);font-size:11.5px;background:var(--panel2);border:1px solid var(--line2);border-bottom-width:2.5px;border-radius:6px;padding:1.5px 6px;color:#dbe4ee}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:1px 9px;color:var(--muted);margin:0 4px 4px 0;background:var(--panel2)}
+footer{margin-top:70px;border-top:1px solid var(--line);padding-top:18px;color:var(--dim);font-size:13px}
+.toc{columns:2;column-gap:36px}
+@media(max-width:900px){.duo{grid-template-columns:1fr}.fork3{grid-template-columns:1fr}.toc{columns:1}}
+.toc a{display:block;color:var(--muted);padding:3px 0;font-size:13.5px}
+.toc a b{color:var(--accent);font-family:var(--mono);font-size:11.5px;margin-right:8px}
+@media(max-width:760px){.fork{grid-template-columns:1fr}}
+.sig{background:#0a0e13;border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-family:var(--mono);font-size:12.5px;color:#e3e8ff;margin:8px 0}
+.sig .a{color:#7ee787}.sig .p{color:#f778ba}.sig .c{color:#8b98a5}
+.duo>div,.fork3>div,.fork>div{min-width:0}
+</style>
+</head>
+<nav><div class="inner">
+  <span class="brand">π extensions</span>
+  <a href="#s0">What it is</a><a href="#s1">Loading</a><a href="#s2">Lifecycle</a><a href="#s3">Context</a>
+  <a href="#s4">pi.* API</a><a href="#s5">Tools &amp; scale</a><a href="#s6">Custom UI</a><a href="#s7">State</a>
+  <a href="#s8">Modes &amp; safety</a><a href="#s9">Recipes</a>
+</div></nav>
+
+<main>
+<div class="hero">
+  <h1><span class="pi">π</span> Extensions — the TypeScript escape hatch</h1>
+  <p class="sub">An extension is one default-exported function that receives <code>ExtensionAPI</code> and hooks itself into pi’s run: lifecycle events, custom tools, slash commands, dialogs, widgets, message renderers, model providers. It runs as TypeScript with no build step. Config can only describe pi; <b>code extends it</b>. This page is the whole surface, as flow graphs. Distilled from the official <code>docs/extensions.md</code> and the shipped examples.</p>
+  <div class="chips">
+    <span class="chip">📄 standalone · works offline from <code>file://</code></span>
+    <span class="chip">🧭 no JS required</span>
+    <span class="chip">🧩 sibling of <code>pi-tools.html</code> &amp; the customization guide</span>
+    <span class="chip">⚡ TypeScript via jiti — no compile</span>
+  </div>
+</div>
+
+<div class="box info"><b class="h">Color legend</b>
+<div class="legend">
+  <span class="n c-ext">extensions / your code</span><span class="n c-core">pi core</span><span class="n c-model">model / LLM</span>
+  <span class="n c-tool">tools</span><span class="n c-ui">TUI rendering</span><span class="n c-settings">settings / CLI</span>
+  <span class="n c-kb">shortcuts / flags</span><span class="n c-env">context &amp; env</span><span class="n c-pkg">packages</span>
+  <span class="n c-ok">ok</span><span class="n c-err">blocked / error</span><span class="n c-warn">decision point</span>
+</div>
+<p class="small muted">Same palette as <code>pi-tools.html</code> and <code>pi-customization-guide.html</code>. This page covers <b>what extensions can do</b>; the customization guide covers discovery, trust, settings and packaging mechanics; <code>pi-tools.html</code> deep-dives custom tools.</p></div>
+
+<details class="call"><summary>Contents (10 sections)</summary><div class="body toc">
+  <a href="#s0"><b>0</b>What an extension is — the factory and its powers</a>
+  <a href="#s1"><b>1</b>Where they live, and how they load</a>
+  <a href="#s2"><b>2</b>The lifecycle — every event in one graph</a>
+  <a href="#s3"><b>3</b>ExtensionContext &amp; CommandContext</a>
+  <a href="#s4"><b>4</b>The <code>pi.*</code> API surface</a>
+  <a href="#s5"><b>5</b>Custom tools &amp; dynamic tool loading</a>
+  <a href="#s6"><b>6</b>Custom UI — dialogs, widgets, rendering</a>
+  <a href="#s7"><b>7</b>State, persistence &amp; branching</a>
+  <a href="#s8"><b>8</b>Modes, errors, trust &amp; safety</a>
+  <a href="#s9"><b>9</b>Recipe gallery &amp; reference</a>
+</div></details>
+
+<section id="s0">
+<h2><span class="secnum">0</span>What an extension is — the factory and its powers <span class="tag">one function, whole surface</span></h2>
+<p class="lede">Pi imports your file with <a href="https://github.com/unjs/jiti">jiti</a> (TypeScript runs directly) and calls its <b>default export</b> with the <code>ExtensionAPI</code>. Whatever that factory registers becomes part of the run. A factory can be <code>async</code>; pi awaits it before continuing startup.</p>
+
+<div class="fig"><div class="cap">FIG 0 · from file on disk to behaviour in a session</div>
+<div class="vflow">
+  <div class="n c-settings"><b>discovery</b><span class="s">auto-found in <code>~/.pi/agent/extensions/</code> &amp; <code>.pi/extensions/</code> · or pointed at by settings <code>extensions[]</code> / <code>packages[]</code> / CLI <code>-e</code></span></div>
+  <div class="a-d">▼<span>project-local entries wait for project trust</span></div>
+  <div class="n c-core"><b>jiti import → default factory called with <code>pi</code></b><span class="s">no build step · npm deps resolve from a <code>package.json</code> beside the file · async factories are awaited</span></div>
+  <div class="a-d">▼<span>the factory registers…</span></div>
+  <div class="fork3">
+    <div class="n c-ext tall"><b>event handlers</b><span class="s"><code>pi.on(event, handler)</code> — react to, block, or transform what pi does</span></div>
+    <div class="n c-tool tall"><b>capabilities</b><span class="s">tools · commands · shortcuts · CLI flags · message &amp; entry renderers · markdown transformers · providers</span></div>
+    <div class="n c-ui tall"><b>runtime control</b><span class="s"><code>sendMessage</code> · <code>appendEntry</code> · <code>setActiveTools</code> · <code>setModel</code> · <code>exec</code> · <code>pi.events</code></span></div>
+  </div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok"><b>session runs with your additions live</b><span class="s">tools appear in the system prompt &amp; <code>pi.getAllTools()</code> · commands in autocomplete · handlers fire in load order</span></div>
+  <div class="a-d">▼<span><code>/reload</code> — or <code>ctx.reload()</code> from a command — tears down and runs this whole flow again</span></div>
+  <div class="n c-ext"><b>session_shutdown → session_start(reason:"reload")</b><span class="s">close session-scoped resources in shutdown, rebuild in-memory state in start</span></div>
+</div>
+</div>
+
+<p>Three properties define the model:</p>
+<div class="fork3">
+  <div class="n c-ext tall"><b>it’s just code</b><span class="s">full system permissions, Node built-ins, any npm package. Nothing is sandboxed — this is why installs are a trust decision (§8).</span></div>
+  <div class="n c-core tall"><b>registration, not patching</b><span class="s">you never edit pi. You call <code>register*</code> / <code>on</code> / <code>send*</code> and pi weaves it in. Every registration in one factory shares one closure — that closure <i>is</i> your extension’s state.</span></div>
+  <div class="n c-settings tall"><b>load order matters</b><span class="s">handlers run in extension load order; <code>tool_result</code> chains, <code>input</code> transforms chain, <code>before_agent_start</code> system prompts chain. Order is deterministic, and yours to reason about.</span></div>
+</div>
+
+<div class="box ok"><b class="h">A minimal but complete extension</b>
+<pre class="code">import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+
+export default function (pi: ExtensionAPI) {
+  // 1 · react to events
+  pi.on("session_start", async (_event, ctx) =&gt; {
+    ctx.ui.notify("Extension loaded!", "info");
+  });
+
+  pi.on("tool_call", async (event, ctx) =&gt; {
+    if (event.toolName === "bash" &amp;&amp; event.input.command?.includes("rm -rf")) {
+      const ok = await ctx.ui.confirm("Dangerous!", "Allow rm -rf?");
+      if (!ok) return { block: true, reason: "Blocked by user" };
+    }
+  });
+
+  // 2 · register a tool the model can call
+  pi.registerTool({
+    name: "greet",
+    label: "Greet",
+    description: "Greet someone by name",
+    parameters: Type.Object({ name: Type.String({ description: "Name to greet" }) }),
+    async execute(_id, params) {
+      return { content: [{ type: "text", text: `Hello, ${params.name}!` }], details: {} };
+    },
+  });
+
+  // 3 · register a slash command
+  pi.registerCommand("hello", {
+    description: "Say hello",
+    handler: async (args, ctx) =&gt; ctx.ui.notify(`Hello ${args || "world"}!`, "info"),
+  });
+}</pre>
+<p class="small muted" style="margin-bottom:0">Test it without installing: <code>pi -e ./my-extension.ts</code>. For hot-reload, put it in an auto-discovery dir and run <code>/reload</code>.</p></div>
+</section>
+
+<section id="s1">
+<h2><span class="secnum">1</span>Where they live, and how they load <span class="tag">discovery &amp; packaging</span></h2>
+<p class="lede">Extensions are auto-discovered from trusted locations — a single <code>.ts</code> file or a directory whose <code>index.ts</code> exports the factory. Project-local entries load <b>only after the project is trusted</b>. Everything else goes through settings or packages.</p>
+
+<div class="twrap"><table class="tbl">
+<tr><th>Location</th><th>Scope</th><th>Notes</th></tr>
+<tr><td><code>~/.pi/agent/extensions/*.ts</code></td><td><b>Global</b></td><td>loaded for every project</td></tr>
+<tr><td><code>~/.pi/agent/extensions/*/index.ts</code></td><td><b>Global</b></td><td>multi-file extension directory</td></tr>
+<tr><td><code>.pi/extensions/*.ts</code></td><td>Project</td><td rowspan="2">only after <b>project trust</b> (§8)</td></tr>
+<tr><td><code>.pi/extensions/*/index.ts</code></td><td>Project</td></tr>
+<tr><td>settings <code>extensions: [path]</code></td><td>Either</td><td>point at files/dirs <i>outside</i> the convention dirs; relative paths resolve against the settings file</td></tr>
+<tr><td>settings <code>packages: [...]</code></td><td>Either</td><td><code>npm:pkg@1.0.0</code> · <code>git:github.com/user/repo@v1</code> — installed, not copied. See <code>packages.md</code></td></tr>
+<tr><td>CLI <code>-e ./path.ts</code></td><td>This run</td><td>quick tests only — no hot-reload</td></tr>
+</table></div>
+
+<h3>Three shapes an extension takes</h3>
+<div class="fork3">
+  <div class="n c-ext tall"><b>single file</b><span class="s"><code>my-extension.ts</code> — the default. Best for anything under a few hundred lines.</span></div>
+  <div class="n c-ext tall"><b>directory + index.ts</b><span class="s"><code>my-extension/index.ts</code> + <code>tools.ts</code> + <code>utils.ts</code> — split it when the file hurts.</span></div>
+  <div class="n c-pkg tall"><b>package with deps</b><span class="s"><code>package.json</code> + <code>node_modules/</code> + <code>src/index.ts</code>; run <code>npm install</code> in the dir and imports resolve automatically</span></div>
+</div>
+
+<pre class="code">// my-extension/package.json — how a packaged extension declares itself
+{
+  "name": "my-extension",
+  "dependencies": { "zod": "^3.0.0", "chalk": "^5.0.0" },
+  "pi": { "extensions": ["./src/index.ts"] }
+}</pre>
+
+<h3>Imports you can rely on</h3>
+<div class="twrap"><table class="tbl">
+<tr><th>Package</th><th>What it gives you</th></tr>
+<tr><td><code>@earendil-works/pi-coding-agent</code></td><td><code>ExtensionAPI</code>, event/context types, tool-call guards (<code>isToolCallEventType</code>, <code>isBashToolResult</code>), <code>withFileMutationQueue</code>, truncation utils, <code>CustomEditor</code>, <code>CONFIG_DIR_NAME</code>, <code>SessionManager</code></td></tr>
+<tr><td><code>typebox</code></td><td><code>Type</code> — tool parameter schemas</td></tr>
+<tr><td><code>@earendil-works/pi-ai</code></td><td><code>StringEnum</code> (Google-compatible enums), provider factories, <code>Usage</code></td></tr>
+<tr><td><code>@earendil-works/pi-tui</code></td><td><code>Text</code>, <code>Box</code>, <code>Container</code>, <code>Component</code>, <code>matchesKey</code>, …</td></tr>
+<tr><td><code>node:*</code> built-ins</td><td><code>node:fs</code>, <code>node:path</code>, <code>node:child_process</code>, …</td></tr>
+</table></div>
+
+<div class="box warn"><b class="h">Async factories, and the resource rule</b>
+An <code>async</code> default export is awaited before <code>session_start</code>, before <code>resources_discover</code>, and before providers queued with <code>registerProvider()</code> flush — perfect for fetching remote config or discovering models at startup.
+<br><br><b>But:</b> factories also run in invocations that never start a session. <b>Never</b> start background resources (processes, sockets, watchers, timers) from the factory. Start them in <code>session_start</code> or on first use, and register an idempotent <code>session_shutdown</code> handler that closes them.</div>
+
+<pre class="code">// async factory: discover models from a local server before startup completes
+export default async function (pi: ExtensionAPI) {
+  const { data } = await (await fetch("http://localhost:1234/v1/models")).json();
+  pi.registerProvider("local-openai", {
+    baseUrl: "http://localhost:1234/v1",
+    apiKey: "$LOCAL_OPENAI_API_KEY",
+    api: "openai-completions",
+    models: data.map((m) =&gt; ({
+      id: m.id, name: m.name ?? m.id, reasoning: false, input: ["text"],
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+      contextWindow: m.context_window ?? 128000,
+      maxTokens: m.max_tokens ?? 4096,
+    })),
+  });
+}</pre>
+</section>
+
+<section id="s2">
+<h2><span class="secnum">2</span>The lifecycle — every event in one graph <span class="tag">the API is the event list</span></h2>
+<p class="lede">Events are the primary interface. Each one is notification-only, or lets you <b>cancel/block</b>, or lets you <b>transform/replace</b> — knowing which is which is most of using the API well. Handlers are <code>async</code>, receive <code>(event, ctx)</code>, and run in extension load order.</p>
+
+<div class="fig"><div class="cap">FIG 2 · one session, every hook point</div>
+<div class="vflow">
+  <div class="stage">startup</div>
+  <div class="n c-warn"><b>project_trust</b><span class="s">only user/global + CLI extensions run. Return <code>{ trusted: "yes" | "no" | "undecided", remember? }</code>. First yes/no wins and suppresses the built-in prompt.</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>session_start</b> <span class="s"><code>reason: "startup" | "reload" | "new" | "resume" | "fork"</code> · <code>previousSessionFile?</code></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>resources_discover</b><span class="s">contribute <code>{ skillPaths, promptPaths, themePaths }</code> · <code>reason: "startup" | "reload"</code></span></div>
+
+  <div class="stage">each user prompt</div>
+  <div class="n c-warn"><b>input</b><span class="s">raw text before skill/template expansion. Return <code>{action:"continue"|"transform"|"handled"}</code>. Extension commands are checked <b>before</b> this.</span></div>
+  <div class="a-d">▼<span>/skill:name · /template expansion, then…</span></div>
+  <div class="n c-warn"><b>before_agent_start</b><span class="s">inject a message and/or replace the system prompt for this turn (chained). <code>event.systemPromptOptions</code> exposes custom prompt, active tools, snippets, guidelines, cwd, context files, skills.</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-model"><b>agent_start</b> <span class="s">→ message_start / message_update / message_end (assistant streaming; message_end can replace the finalized message, same role)</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core"><b>turn_start</b> <span class="s">→ context (rewrite the message list) → before_provider_headers (mutate headers) → before_provider_request (inspect/replace payload) → after_provider_response (status + headers)</span></div>
+  <div class="a-d">▼<span>model answers; if it calls tools…</span></div>
+  <div class="n c-tool"><b>tool_execution_start → tool_call → tool_execution_update → tool_result → tool_execution_end</b><span class="s">the interception pair is <b>tool_call</b> (block / mutate args) and <b>tool_result</b> (patch / replace result) — deep-dive in <code>pi-tools.html</code> §§3–7</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok"><b>turn_end → (loop while tools are called) → agent_end → agent_settled</b><span class="s"><code>agent_end</code> may still be followed by retry/compaction/follow-ups; <code>agent_settled</code> guarantees pi won’t continue automatically</span></div>
+  <div class="a-d">▼<span>extras that can fire anywhere in the above…</span></div>
+  <div class="n c-kb"><b>user_bash</b> <span class="s">user ran <code>!</code>/<code>!!</code> — return custom <code>operations</code>, wrap local ops, or a full <code>result</code></span></div>
+  <div class="n c-core"><b>ui_prompt_start / ui_prompt_end</b> <span class="s">notification-only, around blocking dialogs (<code>select</code>/<code>confirm</code>/<code>input</code>/<code>editor</code>/<code>custom</code>)</span></div>
+  <div class="n c-model"><b>model_select</b> · <b>thinking_level_select</b> <span class="s">model/thinking changed (<code>source: "set" | "cycle" | "restore"</code>) — notification-only</span></div>
+
+  <div class="stage">session replacement (/new · /resume · /fork · /clone · /compact · /tree)</div>
+  <div class="fork">
+    <div class="n c-warn tall"><b>session_before_switch</b><span class="s">/new or /resume → <code>{ cancel: true }</code></span></div>
+    <div class="n c-warn tall"><b>session_before_fork</b><span class="s">/fork or /clone → <code>{ cancel: true }</code></span></div>
+  </div>
+  <div class="fork">
+    <div class="n c-warn tall"><b>session_before_compact</b><span class="s">→ <code>{ cancel }</code> or custom summary · then <code>session_compact</code> / <code>session_compact_failed</code></span></div>
+    <div class="n c-warn tall"><b>session_before_tree</b><span class="s">/tree navigation → <code>{ cancel }</code> or custom summary · then <code>session_tree</code></span></div>
+  </div>
+  <div class="a-d">▼</div>
+  <div class="n c-err"><b>session_shutdown</b><span class="s"><code>reason: "quit" | "reload" | "new" | "resume" | "fork"</code> — close session-scoped resources here</span></div>
+  <div class="n c-ok"><b>…then session_start + resources_discover again with the new reason</b><span class="s">extensions are re-loaded and re-bound for the replacement session</span></div>
+</div>
+</div>
+
+<h3>The event table — what each hook can do</h3>
+<p><span class="pill">block / cancel</span> can veto. <span class="pill">transform</span> can replace data. <span class="pill">notify</span> is read-only.</p>
+<div class="twrap"><table class="tbl">
+<tr><th>Event</th><th>Kind</th><th>What it hands you / returns</th></tr>
+<tr><td><b>project_trust</b></td><td>block</td><td><code>{ trusted: "yes"|"no"|"undecided", remember? }</code> — user/global + CLI extensions only</td></tr>
+<tr><td><b>resources_discover</b></td><td>transform</td><td><code>{ skillPaths, promptPaths, themePaths }</code></td></tr>
+<tr><td><b>session_start</b></td><td>notify</td><td><code>reason</code>, <code>previousSessionFile?</code></td></tr>
+<tr><td><b>session_info_changed</b></td><td>notify</td><td><code>event.name</code> — session renamed</td></tr>
+<tr><td><b>session_before_switch</b> / <b>_fork</b> / <b>_tree</b> / <b>_compact</b></td><td>block</td><td><code>{ cancel: true }</code> (compact &amp; tree can also supply a custom summary)</td></tr>
+<tr><td><b>session_compact</b> / <b>session_compact_failed</b></td><td>notify</td><td>success or failure/abort</td></tr>
+<tr><td><b>session_shutdown</b></td><td>notify</td><td><code>reason</code>, <code>targetSessionFile</code> — the cleanup point</td></tr>
+<tr><td><b>before_agent_start</b></td><td>transform</td><td><code>{ message?, systemPrompt? }</code> — inject context, rewrite the prompt (chained)</td></tr>
+<tr><td><b>agent_start</b> / <b>agent_end</b> / <b>agent_settled</b></td><td>notify</td><td><code>agent_end.messages</code>; <code>agent_settled</code> = pi is really done</td></tr>
+<tr><td><b>turn_start</b> / <b>turn_end</b></td><td>notify</td><td><code>turnIndex</code>; <code>turn_end.message</code>, <code>toolResults</code></td></tr>
+<tr><td><b>message_start</b> / <b>message_update</b> / <b>message_end</b></td><td>transform</td><td><code>message_end</code> may return <code>{ message }</code> (same role)</td></tr>
+<tr><td><b>context</b></td><td>transform</td><td><code>{ messages }</code> — non-destructive rewrite before each LLM call</td></tr>
+<tr><td><b>before_provider_headers</b></td><td>transform</td><td>mutate <code>event.headers</code> in place; <code>null</code> deletes a key</td></tr>
+<tr><td><b>before_provider_request</b></td><td>transform</td><td>return any value to replace the provider payload; <code>undefined</code> keeps it</td></tr>
+<tr><td><b>after_provider_response</b></td><td>notify</td><td><code>status</code>, <code>headers</code> — before the stream body is consumed</td></tr>
+<tr><td><b>model_select</b> / <b>thinking_level_select</b></td><td>notify</td><td>new &amp; previous model / level</td></tr>
+<tr><td><b>tool_execution_start</b> / <b>_update</b> / <b>_end</b></td><td>notify</td><td>lifecycle around a tool run; <code>_update</code> carries <code>partialResult</code></td></tr>
+<tr><td><b>tool_call</b></td><td>block</td><td><code>event.input</code> is <b>mutable</b> (no re-validation) · return <code>{ block, reason?, terminate? }</code></td></tr>
+<tr><td><b>tool_result</b></td><td>transform</td><td>return a partial patch <code>{ content?, details?, isError?, usage? }</code> — chains like middleware</td></tr>
+<tr><td><b>user_bash</b></td><td>transform</td><td><code>{ operations }</code> or <code>{ result }</code></td></tr>
+<tr><td><b>input</b></td><td>transform</td><td><code>{ action: "continue" | "transform", text?, images? }</code> or <code>{ action: "handled" }</code></td></tr>
+<tr><td><b>ui_prompt_start</b> / <b>ui_prompt_end</b></td><td>notify</td><td><code>kind</code>, <code>title</code> — "waiting for user" status integrations</td></tr>
+</table></div>
+
+<div class="box info"><b class="h">Input processing order — where <code>input</code> sits</b>
+<ol style="margin-bottom:0">
+<li>Extension commands (<code>/cmd</code>) checked first — if found, the handler runs and <code>input</code> is <b>skipped</b></li>
+<li><code>input</code> fires — intercept, transform, or handle</li>
+<li>Not handled → <code>/skill:name</code> expands to skill content</li>
+<li>Not handled → <code>/template</code> expands to template content</li>
+<li>Agent processing begins (<code>before_agent_start</code>, …)</li>
+</ol></div>
+</section>
+
+<section id="s3">
+<h2><span class="secnum">3</span>ExtensionContext &amp; CommandContext <span class="tag">your <code>ctx</code></span></h2>
+<p class="lede">Every handler receives <code>ctx</code>. Event handlers and tools get <code>ExtensionContext</code>; slash commands get <code>ExtensionCommandContext</code>, which adds session-control methods that would deadlock if called from an event handler.</p>
+
+<div class="fig"><div class="cap">FIG 3 · what <code>ctx</code> opens up</div>
+<div class="vflow">
+  <div class="n c-ui wide"><b>ctx.ui</b><span class="s">dialogs, notifications, status, widgets, footer, editor, theme, autocomplete — §6</span></div>
+  <div class="fork3">
+    <div class="n c-settings tall"><b>where am I running</b><span class="s"><code>ctx.mode</code> (<code>"tui"|"rpc"|"json"|"print"</code>) · <code>ctx.hasUI</code> · <code>ctx.cwd</code> · <code>ctx.isProjectTrusted()</code></span></div>
+    <div class="n c-env tall"><b>what’s loaded</b><span class="s"><code>ctx.sessionManager</code> (read-only entries/branch/leaf) · <code>ctx.modelRegistry</code> · <code>ctx.model</code> · <code>ctx.thinkingLevel</code> · <code>ctx.scopedModels</code></span></div>
+    <div class="n c-core tall"><b>control flow</b><span class="s"><code>ctx.isIdle()</code> · <code>ctx.abort()</code> · <code>ctx.hasPendingMessages()</code> · <code>ctx.signal</code> · <code>ctx.shutdown()</code></span></div>
+  </div>
+  <div class="fork3">
+    <div class="n c-model tall"><b>context &amp; cost</b><span class="s"><code>ctx.getContextUsage()</code> → tokens · <code>ctx.getSystemPrompt()</code> (chained during <code>before_agent_start</code>)</span></div>
+    <div class="n c-ext tall"><b>compaction</b><span class="s"><code>ctx.compact({ customInstructions, onComplete, onError })</code> — non-blocking</span></div>
+    <div class="n c-err tall"><b>cancellation</b><span class="s"><code>ctx.signal</code> is the agent’s abort signal — pass it to <code>fetch</code>, model calls, file helpers</span></div>
+  </div>
+  <div class="a-d">▼<span>commands only</span></div>
+  <div class="n c-kb"><b>ExtensionCommandContext</b><span class="s"><code>ctx.getSystemPromptOptions()</code> · <code>ctx.waitForIdle()</code> · <code>ctx.newSession(opts)</code> · <code>ctx.fork(entryId, opts)</code> · <code>ctx.navigateTree(targetId, opts)</code> · <code>ctx.switchSession(sessionPath, opts)</code> · <code>ctx.reload()</code></span></div>
+</div>
+</div>
+
+<div class="duo">
+<div>
+<h4>Details worth knowing</h4>
+<ul>
+<li><code>ctx.signal</code> is usually defined during <code>tool_call</code>, <code>tool_result</code>, <code>message_update</code>, <code>turn_end</code> — and <code>undefined</code> in idle/session/command contexts.</li>
+<li><code>ctx.getSystemPrompt()</code> reports <b>pi’s system prompt string</b>, not the final provider payload — it won’t show <code>before_provider_request</code> rewrites.</li>
+<li><code>ctx.shutdown()</code> is deferred until idle in interactive/RPC, a no-op in print mode; it emits <code>session_shutdown</code> first.</li>
+<li><code>ctx.scopedModels</code> mirrors <code>/scoped-models</code> (from <code>--models</code> + <code>enabledModels</code>); empty = all available. Build model pickers from it, not from the full catalogue.</li>
+<li>Use <code>CONFIG_DIR_NAME</code>, not a hardcoded <code>".pi"</code>, when building project config paths.</li>
+</ul></div>
+<div>
+<h4>Session control (commands only)</h4>
+<ul>
+<li><code>newSession</code> / <code>fork</code> / <code>switchSession</code> take a <code>withSession(ctx =&gt; …)</code> callback that runs <b>after</b> the replacement session is live.</li>
+<li><code>navigateTree(targetId, opts)</code> drives <code>/tree</code> navigation.</li>
+<li>Discover sessions with the static <code>SessionManager.list(cwd)</code> / <code>listAll()</code>.</li>
+<li><code>await ctx.reload()</code> = <code>/reload</code> — treat it as terminal for that handler.</li>
+</ul></div></div>
+
+<div class="box sec"><b class="h">Session-replacement footguns</b>
+<ul style="margin-bottom:0">
+<li><code>withSession</code> runs only after the old session emitted <code>session_shutdown</code> and the new extension instance already got <code>session_start</code>.</li>
+<li>It still executes in the <b>old closure</b> — your <code>session_shutdown</code> cleanup has already run.</li>
+<li>Captured old <code>pi</code>, old <code>ctx</code>, and extracted objects (e.g. <code>const sm = ctx.sessionManager</code>) are <b>stale</b> and will throw. Use only the <code>ctx</code> passed to <code>withSession</code>.</li>
+<li>Carry across only plain data: strings, ids, serialized config.</li>
+</ul></div>
+
+<pre class="code">// safe handoff: capture a plain string, re-send it from the new session’s ctx
+pi.registerCommand("handoff", {
+  handler: async (_args, ctx) =&gt; {
+    const kickoff = "Continue from the replacement session";
+    await ctx.newSession({
+      withSession: async (ctx) =&gt; { await ctx.sendUserMessage(kickoff); },
+    });
+  },
+});</pre>
+</section>
+
+<section id="s4">
+<h2><span class="secnum">4</span>The <code>pi.*</code> API surface <span class="tag">everything you can register or do</span></h2>
+<p class="lede">One object, grouped by intent: subscribe, talk to the session, persist, register UI/commands, drive the runtime, add providers. Most registrations work at load time <i>and</i> later — inside <code>session_start</code>, a command, or any handler — taking effect immediately without <code>/reload</code>.</p>
+
+<div class="cards">
+  <div class="card"><h4>Events</h4><p><code>pi.on(event, handler)</code><br><code>pi.events.on/emit(name, data)</code> — inter-extension bus</p></div>
+  <div class="card"><h4>Messages</h4><p><code>pi.sendMessage(msg, opts)</code> — custom message, enters LLM context<br><code>pi.sendUserMessage(content, opts)</code> — as if typed</p></div>
+  <div class="card"><h4>Persistence</h4><p><code>pi.appendEntry(type, data)</code> — durable, <b>not</b> in LLM context</p></div>
+  <div class="card"><h4>Session metadata</h4><p><code>pi.setSessionName(n)</code> / <code>getSessionName()</code><br><code>pi.setLabel(entryId, label)</code></p></div>
+  <div class="card"><h4>Capability registration</h4><p><code>registerTool</code> · <code>registerCommand</code> · <code>registerShortcut</code> · <code>registerFlag</code> · <code>registerMessageRenderer</code> · <code>registerEntryRenderer</code> · <code>registerMarkdownTransformer</code></p></div>
+  <div class="card"><h4>Runtime</h4><p><code>pi.exec</code> · <code>get/setActiveTools</code> · <code>getAllTools</code> · <code>setModel</code> · <code>get/setThinkingLevel</code> · <code>getFlag</code></p></div>
+  <div class="card"><h4>Providers</h4><p><code>pi.registerProvider(name, config)</code> · <code>pi.unregisterProvider(name)</code></p></div>
+  <div class="card"><h4>Introspection</h4><p><code>pi.getCommands()</code> — extension + prompt + skill commands with provenance</p></div>
+</div>
+
+<h3>Messages &amp; persistence — three destinations, don’t mix them</h3>
+<div class="fig"><div class="cap">FIG 4 · where your content ends up</div>
+<div class="vflow">
+  <div class="n c-model"><b>pi.sendMessage({ customType, content, display, details }, { deliverAs, triggerTurn })</b><span class="s">→ into LLM context (custom role). Render it in the TUI with <code>registerMessageRenderer(customType, …)</code>.</span></div>
+  <div class="n c-core"><b>pi.sendUserMessage("text" | content[], { deliverAs, expandPromptTemplates })</b><span class="s">→ a real user turn. Always triggers a turn. While streaming you <b>must</b> pass <code>deliverAs</code>.</span></div>
+  <div class="n c-ui"><b>pi.appendEntry(customType, data)</b><span class="s">→ session history, <b>never</b> sent to the LLM. Durable across restarts. Render with <code>registerEntryRenderer(customType, …)</code>.</span></div>
+</div>
+</div>
+
+<div class="duo">
+<div>
+<h4>Delivery modes (<code>deliverAs</code>)</h4>
+<ul>
+<li><code>"steer"</code> <span class="muted">(default)</span> — queued while streaming; delivered after the current turn finishes its tool calls, before the next LLM call.</li>
+<li><code>"followUp"</code> — waits until the agent has no more tool calls.</li>
+<li><code>"nextTurn"</code> — queued for the next user prompt; interrupts nothing.</li>
+<li><code>triggerTurn: true</code> — if the agent is idle, start a response immediately (only for steer/followUp).</li>
+</ul></div>
+<div>
+<h4>Command provenance</h4>
+<pre class="code">const cmds = pi.getCommands();
+// { name, description?,
+//   source: "extension" | "prompt" | "skill",
+//   sourceInfo: { path, source, scope:
+//     "user"|"project"|"temporary",
+//     origin: "package"|"top-level", baseDir? } }</pre>
+<p class="small muted"><code>sourceInfo</code> is the canonical provenance — never infer ownership from the name. Built-in interactive commands (<code>/model</code>, <code>/settings</code>) aren’t listed. Duplicate command names are kept with suffixes <code>/review:1</code>, <code>/review:2</code> in load order.</p></div></div>
+
+<h3>Registration at a glance</h3>
+<div class="twrap"><table class="tbl">
+<tr><th>Call</th><th>Registers</th><th>Note</th></tr>
+<tr><td><code>pi.registerTool(def)</code></td><td>a tool the LLM can call</td><td>§5 · deep-dive in <code>pi-tools.html</code></td></tr>
+<tr><td><code>pi.registerCommand(name, { description, handler, getArgumentCompletions? })</code></td><td><code>/name [args]</code></td><td>handler gets <code>ExtensionCommandContext</code></td></tr>
+<tr><td><code>pi.registerShortcut("ctrl+shift+p", { description, handler })</code></td><td>a keybinding action</td><td>format per <code>keybindings.md</code></td></tr>
+<tr><td><code>pi.registerFlag("plan", { type, default, description })</code></td><td>a CLI flag</td><td>read with <code>pi.getFlag("plan")</code></td></tr>
+<tr><td><code>pi.registerMessageRenderer(customType, fn)</code></td><td>TUI renderer for <code>sendMessage</code> content</td><td>content <b>is</b> in LLM context</td></tr>
+<tr><td><code>pi.registerEntryRenderer(customType, fn)</code></td><td>TUI renderer for <code>appendEntry</code> content</td><td>content is <b>not</b> in LLM context</td></tr>
+<tr><td><code>pi.registerMarkdownTransformer(fn)</code></td><td>rewrites markdown before rendering</td><td>display-only; chained; must stay sync &amp; cheap</td></tr>
+<tr><td><code>pi.registerProvider(name, config)</code></td><td>models / proxy / OAuth</td><td>factory-time calls are queued until the runner inits; later calls apply immediately</td></tr>
+</table></div>
+
+<pre class="code">// the runtime calls you’ll actually use
+const r = await pi.exec("git", ["status"], { signal, timeout: 5000 }); // r.stdout/stderr/code/killed
+
+const active = pi.getActiveTools();          // ["read","bash",…]
+const all    = pi.getAllTools();             // + description, parameters, promptGuidelines, sourceInfo
+pi.setActiveTools(["read", "bash"]);         // read-only mode
+pi.setActiveTools([...new Set([...active, "my_tool"])]); // additive
+
+if (await pi.setModel(model) === false) ctx.ui.notify("No API key", "error");
+pi.setThinkingLevel("high");                 // "off"…"max", clamped to model capability
+pi.events.emit("my:event", { ... });         // sibling extensions can pi.events.on it</pre>
+</section>
+
+<section id="s5">
+<h2><span class="secnum">5</span>Custom tools &amp; dynamic tool loading <span class="tag">scale past the prompt</span></h2>
+<p class="lede">Tools are the single biggest extension surface — <code>pi.registerTool()</code> with a typebox schema, <code>execute()</code>, interception events, custom rendering, remote operations. That’s covered in depth by its own page. What’s <i>extension-specific</i> is the scale trick: register a thousand tools, keep a handful active, load more on demand.</p>
+
+<div class="box info"><b class="h">Read this next</b>
+<code>pi-tools.html</code> — FIG 2 anatomy of a tool, interception (<code>tool_call</code>/<code>tool_result</code>), overriding built-ins, remote execution via <code>operations</code>, truncation to 50KB/2000 lines, <code>renderCall</code>/<code>renderResult</code>, <code>withFileMutationQueue</code> for parallel-safe file writes, and state in <code>details</code>.</div>
+
+<h3>Dynamic tool loading — a loader tool that switches capabilities on</h3>
+<div class="fig"><div class="cap">FIG 5 · register everything, activate a little, add on demand</div>
+<div class="vflow">
+  <div class="n c-ext"><b>1 · register every tool</b><span class="s">all land in <code>pi.getAllTools()</code> — but holding every definition in the system prompt is what you’re avoiding</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>2 · keep only the loader active</b><span class="s"><code>search_tools</code> active; <code>lookup_weather</code>, <code>search_issues</code>, … inactive</span></div>
+  <div class="a-d">▼<span>a task needs a dormant capability</span></div>
+  <div class="n c-warn"><b>3 · loader calls <code>pi.setActiveTools([...current, ...matches])</code></b><span class="s">must be <b>additive</b> — don’t remove active tools in the same call. Unknown names are ignored. Match by keyword, BM25, embeddings, remote catalog…</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core"><b>4 · pi records which tools were added on that tool result</b><span class="s">no special return value needed — the active-set change <i>is</i> the signal</span></div>
+  <div class="a-d">▼</div>
+  <div class="fork">
+    <div class="n c-ok tall"><b>native deferred loading</b><span class="s">Anthropic Sonnet/Opus/Fable ≥ 4.5 (not Haiku): <code>defer_loading</code> + <code>tool_reference</code>. OpenAI <code>gpt-5.4</code>+: client <code>tool_search_call</code>/<code>tool_search_output</code>. Stable prompt prefix preserved.</span></div>
+    <div class="n c-warn tall"><b>fallback — every other model</b><span class="s">pi simply sends the full active list next request. Works everywhere; adding definitions may invalidate the provider’s cached prefix.</span></div>
+  </div>
+</div>
+</div>
+
+<div class="box warn"><b class="h">Cache-aware rules for loaders</b>
+<ul style="margin-bottom:0">
+<li>Keep the loader tool active for the whole session; prefer <b>adding</b> over replacing. Removals work but never use deferred loading.</li>
+<li>A lazily loaded tool with <code>promptSnippet</code>/<code>promptGuidelines</code> rebuilds the system prompt when activated — that can break the prefix cache even on capable models. Lazy tools should rely on their <code>description</code> alone.</li>
+<li>Opt a verified proxy into native handling only when it truly supports it: <code>compat.supportsToolReferences: true</code> (anthropic-messages) or <code>compat.supportsToolSearch: true</code> (openai-responses / openai-codex-responses).</li>
+</ul></div>
+
+<pre class="code">// the shape of a loader (full version: examples/extensions/dynamic-tools.ts)
+pi.registerTool({
+  name: "search_tools",
+  description: "Search for and enable tools relevant to a task",
+  promptSnippet: "Search for additional tools when the active tools cannot perform the task",
+  promptGuidelines: ["Use search_tools when a task requires a capability that is not currently available."],
+  parameters: Type.Object({ query: Type.String() }),
+  async execute(_id, params) {
+    const matches = /* score pi.getAllTools() against params.query */;
+    const active = pi.getActiveTools();
+    const added = matches.filter((n) =&gt; !active.includes(n));
+    pi.setActiveTools([...new Set([...active, ...added])]);
+    return { content: [{ type: "text", text: `Loaded tools: ${added.join(", ")}` }], details: { added } };
+  },
+});
+
+pi.on("session_start", () =&gt; {
+  // searchable tools stay registered but inactive; loader stays on
+  pi.setActiveTools([...pi.getActiveTools().filter((n) =&gt; !SEARCHABLE.has(n)), "search_tools"]);
+});</pre>
+<p class="small muted">Also see <code>kimi-deferred-tools.ts</code>, and <code>structured-output.ts</code> for <code>terminate: true</code> (end the turn when every result in the batch is terminating).</p>
+</section>
+
+<section id="s6">
+<h2><span class="secnum">6</span>Custom UI — dialogs, widgets, rendering <span class="tag">ctx.ui</span></h2>
+<p class="lede">Everything visible is reachable from <code>ctx.ui</code>. Guard terminal-only features with <code>ctx.mode === "tui"</code>; guard dialogs/notifications that also work over RPC with <code>ctx.hasUI</code>. Full component recipes live in <code>tui.md</code>.</p>
+
+<div class="duo">
+<div>
+<h4>Dialogs — blocking, awaitable</h4>
+<pre class="code">const choice = await ctx.ui.select("Pick one:", ["A", "B", "C"]);
+const ok     = await ctx.ui.confirm("Delete?", "This cannot be undone");
+const name   = await ctx.ui.input("Name:", "placeholder");
+const text   = await ctx.ui.editor("Edit:", "prefilled text");
+
+ctx.ui.notify("Done!", "info"); // "info" | "warning" | "error"</pre>
+<p class="small muted">Both dialog types support auto-dismiss with a live countdown: <code>{ timeout: 5000 }</code>. On timeout: <code>select</code>/<code>input</code> → <code>undefined</code>, <code>confirm</code> → <code>false</code>. Use an <code>AbortSignal</code> instead when you need to tell timeout apart from user cancel.</p></div>
+<div>
+<h4>Status, working row, widget, footer, title</h4>
+<pre class="code">ctx.ui.setStatus("my-ext", "Processing…");
+ctx.ui.setStatus("my-ext", undefined);          // clear
+
+ctx.ui.setWorkingMessage("Thinking deeply…");
+ctx.ui.setWorkingIndicator({ frames: [ctx.ui.theme.fg("accent","●")] });
+ctx.ui.setWorkingVisible(false);                // hide the row
+
+ctx.ui.setWidget("my-widget", ["Line 1", "Line 2"]);
+ctx.ui.setWidget("my-widget", [...], { placement: "belowEditor" });
+ctx.ui.setWidget("my-widget", (tui, theme) =&gt; new Text(…));
+
+ctx.ui.setFooter((tui, theme) =&gt; ({ render: (w) =&gt; [theme.fg("dim","Custom")], invalidate(){} }));
+ctx.ui.setTitle("pi - my-project");
+ctx.ui.setEditorText("Prefill");  // + getEditorText(), pasteToEditor()</pre></div></div>
+
+<div class="duo">
+<div>
+<h4>Custom components &amp; overlays</h4>
+<pre class="code">import { Text } from "@earendil-works/pi-tui";
+
+const ok = await ctx.ui.custom&lt;boolean&gt;((tui, theme, keybindings, done) =&gt; {
+  const text = new Text("Enter = confirm, Esc = cancel", 1, 1);
+  text.onKey = (key) =&gt; {
+    if (key === "return") done(true);
+    if (key === "escape") done(false);
+    return true;
+  };
+  return text;
+});
+
+// floating modal instead of replacing the editor:
+await ctx.ui.custom(render, { overlay: true,
+  overlayOptions: { anchor: "top-right", width: "50%", margin: 2 },
+  onHandle: (h) =&gt; h.focus() });</pre>
+<p class="small muted"><code>custom()</code> temporarily replaces the editor until <code>done()</code> is called; returns <code>undefined</code> in RPC mode.</p></div>
+<div>
+<h4>Custom editor &amp; autocomplete</h4>
+<pre class="code">class VimEditor extends CustomEditor {   // extend CustomEditor, not Editor
+  private mode: "normal" | "insert" = "insert";
+  handleInput(data: string): void {
+    if (matchesKey(data, "escape") &amp;&amp; this.mode === "insert") { this.mode = "normal"; return; }
+    if (this.mode === "normal" &amp;&amp; data === "i") { this.mode = "insert"; return; }
+    super.handleInput(data);             // app keybindings + text editing
+  }
+}
+ctx.ui.setEditorComponent((tui, theme, kb) =&gt; new VimEditor(tui, theme, kb));
+ctx.ui.setEditorComponent(undefined);    // restore default
+
+// stack autocomplete on top of the built-in slash/path provider
+ctx.ui.addAutocompleteProvider((current) =&gt; ({
+  triggerCharacters: ["#"],
+  async getSuggestions(lines, line, col, options) {
+    /* your match? return items : */ return current.getSuggestions(lines, line, col, options);
+  },
+  applyCompletion: (...a) =&gt; current.applyCompletion(...a),
+}));</pre></div></div>
+
+<h3>Rendering your own content</h3>
+<div class="fork3">
+  <div class="n c-ui tall"><b>messages<br><code>registerMessageRenderer</code></b><span class="s">for <code>pi.sendMessage()</code> content. Receives <code>(message, { expanded, outputPad }, theme)</code>. <b>Is</b> in LLM context.</span></div>
+  <div class="n c-ui tall"><b>entries<br><code>registerEntryRenderer</code></b><span class="s">for <code>pi.appendEntry()</code> content. Receives <code>(entry, { expanded }, theme)</code>. <b>Not</b> in LLM context.</span></div>
+  <div class="n c-ui tall"><b>markdown<br><code>registerMarkdownTransformer</code></b><span class="s">rewrites user/assistant/thinking markdown before rendering. Chained per handler; keep it synchronous and cheap.</span></div>
+</div>
+
+<pre class="code">import { Box, Text } from "@earendil-works/pi-tui";
+
+pi.registerEntryRenderer("status-card", (entry, { expanded }, theme) =&gt; {
+  const data = entry.data as { title: string; count: number };
+  const box = new Box(1, 1, (t) =&gt; theme.bg("customMessageBg", t));
+  box.addChild(new Text(`${theme.bold(data.title)}: ${data.count}`));
+  if (expanded) box.addChild(new Text(theme.fg("dim", JSON.stringify(data, null, 2))));
+  return box;
+});
+pi.appendEntry("status-card", { title: "Indexed files", count: 17 });</pre>
+
+<div class="box ok"><b class="h">Theme: use tokens, never hardcoded colors</b>
+<code>theme.fg("accent"|"success"|"error"|"warning"|"muted"|"dim"|"toolTitle", text)</code>, <code>theme.bold/italic/strikethrough</code>, <code>theme.bg(token, text)</code>. For code previews: <code>highlightCode(code, getLanguageFromPath(path) ?? lang, theme)</code>. Theme tokens are what make your extension respect user themes.</div>
+</section>
+
+<section id="s7">
+<h2><span class="secnum">7</span>State, persistence &amp; branching <span class="tag">what survives what</span></h2>
+<p class="lede">Three kinds of memory, three lifetimes. Pick by asking: should the <i>model</i> see it, should the <i>user</i> see it, and should it survive a fork? Branching is the trap — a naive in-memory variable replays a fork’s history into the wrong state.</p>
+
+<div class="fig"><div class="cap">FIG 6 · three lifetimes of extension state</div>
+<div class="vflow">
+  <div class="n c-err"><b>in-memory variables in the factory closure</b><span class="s">fine within one run. Lost on reload, resume, fork, and process exit. Use for caches and handles, never as your only copy of user-visible state.</span></div>
+  <div class="n c-tool"><b>tool-result <code>details</code></b><span class="s">the documented home for state. Rides the session, so <b>branches carry it correctly</b>. Rebuild on <code>session_start</code> by scanning the branch’s <code>toolResult</code> messages.</span></div>
+  <div class="n c-ui"><b><code>pi.appendEntry(customType, data)</code></b><span class="s">durable session entries, invisible to the LLM. Restore by scanning entries with matching <code>customType</code>. Ideal for TUI-only state (cards, counters, UI config).</span></div>
+</div>
+</div>
+
+<pre class="code">export default function (pi: ExtensionAPI) {
+  let items: string[] = [];                       // fast working copy
+
+  pi.on("session_start", async (_e, ctx) =&gt; {     // rebuild from the branch you’re actually on
+    items = [];
+    for (const entry of ctx.sessionManager.getBranch()) {
+      if (entry.type === "message" &amp;&amp; entry.message.role === "toolResult"
+          &amp;&amp; entry.message.toolName === "my_tool") {
+        items = entry.message.details?.items ?? [];
+      }
+    }
+  });
+
+  pi.registerTool({
+    name: "my_tool",
+    // …
+    async execute(_id, params) {
+      items.push("new item");
+      return {
+        content: [{ type: "text", text: "Added" }],
+        details: { items: [...items] },             // snapshot so the branch can rebuild it
+      };
+    },
+  });
+
+  pi.on("session_shutdown", async () =&gt; { /* close pools, watchers, child processes */ });
+}</pre>
+
+<div class="box info"><b class="h">Reads you’ll use to rebuild state</b>
+<code>ctx.sessionManager.getEntries()</code> (all) · <code>getBranch()</code> (current branch) · <code>buildContextEntries()</code> (active branch with compaction applied) · <code>getLeafId()</code> · <code>getLabel(entryId)</code>. Labels you set with <code>pi.setLabel()</code> persist and show in <code>/tree</code> — use them as named checkpoints.</div>
+</section>
+
+<section id="s8">
+<h2><span class="secnum">8</span>Modes, errors, trust &amp; safety <span class="tag">where extensions don’t run the same</span></h2>
+<p class="lede">The same extension runs in four modes, but only interactive mode has a terminal. Guard accordingly, fail safe, and remember that installing an extension is granting it your shell.</p>
+
+<div class="duo">
+<div>
+<h4>Mode matrix</h4>
+<div class="twrap"><table class="tbl" style="min-width:0">
+<tr><th>Mode</th><th><code>ctx.mode</code></th><th><code>hasUI</code></th><th>Notes</th></tr>
+<tr><td>Interactive</td><td><code>"tui"</code></td><td><code>true</code></td><td>full TUI</td></tr>
+<tr><td>RPC <code>--mode rpc</code></td><td><code>"rpc"</code></td><td><code>true</code></td><td>dialogs/notify over JSON; <code>custom()</code> → <code>undefined</code></td></tr>
+<tr><td>JSON <code>--mode json</code></td><td><code>"json"</code></td><td><code>false</code></td><td>event stream; UI methods no-op</td></tr>
+<tr><td>Print <code>-p</code></td><td><code>"print"</code></td><td><code>false</code></td><td>extensions run, can’t prompt</td></tr>
+</table></div>
+<p class="small muted"><code>ctx.mode === "tui"</code> → terminal-only APIs (<code>custom()</code>, component factories, raw key handling). <code>ctx.hasUI</code> → dialogs + notify/status/widget (work in TUI <b>and</b> RPC).</p></div>
+<div>
+<h4>Error handling rules</h4>
+<ul>
+<li><b>Extension errors are logged; the agent continues.</b> A throwing handler never kills the session.</li>
+<li><b><code>tool_call</code> errors block the tool</b> — fail-safe by design, so a broken guard denies rather than permits.</li>
+<li><b>Throw to fail a tool.</b> A thrown <code>execute()</code> error is caught, reported to the LLM with <code>isError: true</code>, and the run continues. Returning a value <i>never</i> sets the error flag.</li>
+</ul>
+<div class="box sec" style="margin-bottom:0"><b class="h">Security</b>
+Extensions run with your <b>full system permissions</b> and arbitrary code execution. Install only from sources you trust. Project-local <code>.pi/extensions</code> load <b>only after project trust</b> — that gate exists precisely because of this.</div></div></div>
+
+<h3>Trust, from the extension’s side</h3>
+<div class="fig"><div class="cap">FIG 7 · the project_trust hook</div>
+<div class="vflow">
+  <div class="n c-settings"><b>pi starts in a cwd with project config</b><span class="s">project <code>.pi/</code> or <code>.agents/skills</code> present, trust unresolved in this process</span></div>
+  <div class="a-d">▼<span>only user/global + CLI <code>-e</code> extensions are loaded this early</span></div>
+  <div class="n c-warn"><b>project_trust fires</b><span class="s">check <code>ctx.hasUI</code> before prompting. Return <code>{ trusted: "yes"|"no", remember?: true }</code> to own the decision (first yes/no wins, built-in prompt suppressed), or <code>{ trusted: "undecided" }</code> to defer.</span></div>
+  <div class="a-d">▼<span>no handler decided…</span></div>
+  <div class="n c-core"><b>normal resolution continues</b><span class="s">saved <code>trust.json</code> decisions apply first, then <code>defaultProjectTrust</code> decides whether pi asks, trusts, or declines</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok"><b>trusted → project extensions load</b> <span class="s">· <code>ctx.isProjectTrusted()</code> tells later handlers whether project-local config may be honored</span></div>
+</div>
+</div>
+</section>
+
+<section id="s9">
+<h2><span class="secnum">9</span>Recipe gallery &amp; reference <span class="tag">steal from the examples</span></h2>
+<p class="lede">Every pattern below ships as a working file under <code>examples/extensions/</code>. Copy the closest one and edit.</p>
+
+<div class="twrap"><table class="tbl">
+<tr><th>Pattern</th><th>What it does</th><th>Example file</th></tr>
+<tr><td><b>Permission &amp; path guards</b></td><td>confirm destructive commands, protect <code>.env</code> / <code>node_modules</code>, warn on dirty git</td><td><code>confirm-destructive.ts</code> · <code>permission-gate.ts</code> · <code>protected-paths.ts</code> · <code>dirty-repo-guard.ts</code></td></tr>
+<tr><td><b>Input transformation</b></td><td>rewrite / intercept user input before expansion</td><td><code>input-transform.ts</code> · <code>input-transform-streaming.ts</code> · <code>inline-bash.ts</code></td></tr>
+<tr><td><b>Context &amp; system prompt</b></td><td>inject rules, inspect loaded context, footer info</td><td><code>claude-rules.ts</code> · <code>prompt-customizer.ts</code> · <code>system-prompt-header.ts</code></td></tr>
+<tr><td><b>Dialogs &amp; wizard tools</b></td><td>ask the user mid-task</td><td><code>question.ts</code> · <code>questionnaire.ts</code> · <code>qna.ts</code> · <code>timed-confirm.ts</code> · <code>notify.ts</code></td></tr>
+<tr><td><b>Commands</b></td><td>slash commands with logic + argument completion</td><td><code>commands.ts</code> · <code>github-issue-autocomplete.ts</code></td></tr>
+<tr><td><b>Status &amp; chrome</b></td><td>footers, headers, status lines, working indicator</td><td><code>custom-footer.ts</code> · <code>custom-header.ts</code> · <code>status-line.ts</code> · <code>working-indicator.ts</code> · <code>widget-placement.ts</code> · <code>titlebar-spinner.ts</code></td></tr>
+<tr><td><b>Editors</b></td><td>replace the input editor (vim, rainbow, modal)</td><td><code>modal-editor.ts</code> · <code>rainbow-editor.ts</code> · <code>border-status-editor.ts</code></td></tr>
+<tr><td><b>Rendering</b></td><td>messages, entries, markdown, thinking labels</td><td><code>message-renderer.ts</code> · <code>entry-renderer.ts</code> · <code>hidden-thinking-label.ts</code></td></tr>
+<tr><td><b>Compaction &amp; sessions</b></td><td>custom summaries, git checkpoints, commit on exit, handoff</td><td><code>custom-compaction.ts</code> · <code>trigger-compact.ts</code> · <code>git-checkpoint.ts</code> · <code>auto-commit-on-exit.ts</code> · <code>handoff.ts</code> · <code>summarize.ts</code></td></tr>
+<tr><td><b>Session metadata</b></td><td>names and <code>/tree</code> bookmarks</td><td><code>session-name.ts</code> · <code>bookmark.ts</code></td></tr>
+<tr><td><b>Stateful tools</b></td><td>todo lists, shared state across tools, deps</td><td><code>todo.ts</code> · <code>tools.ts</code> · <code>with-deps/</code></td></tr>
+<tr><td><b>Dynamic loading</b></td><td>loader tool enables more tools on demand</td><td><code>dynamic-tools.ts</code> · <code>kimi-deferred-tools.ts</code></td></tr>
+<tr><td><b>Background &amp; events</b></td><td>react to the world, not just prompts; inter-extension bus</td><td><code>file-trigger.ts</code> · <code>event-bus.ts</code> · <code>git-merge-and-resolve.ts</code></td></tr>
+<tr><td><b>Remote &amp; sandbox</b></td><td>SSH execution, persistent shell, micro-VM, subagents</td><td><code>ssh.ts</code> · <code>interactive-shell.ts</code> · <code>sandbox/</code> · <code>gondolin/</code> · <code>subagent/</code></td></tr>
+<tr><td><b>Providers</b></td><td>custom proxy, OAuth login, live model discovery</td><td><code>custom-provider-anthropic/</code> · <code>custom-provider-gitlab-duo/</code> · <code>provider-payload.ts</code></td></tr>
+<tr><td><b>Runtime control</b></td><td>reload, presets, plan mode, shutdown command</td><td><code>reload-runtime.ts</code> · <code>preset.ts</code> · <code>plan-mode/</code> · <code>shutdown-command.ts</code></td></tr>
+<tr><td><b>Just for fun</b></td><td>the loop is fully yours</td><td><code>snake.ts</code> · <code>space-invaders.ts</code> · <code>tic-tac-toe.ts</code> · <code>doom-overlay/</code></td></tr>
+</table></div>
+
+<h3>Cheat reference</h3>
+<div class="duo">
+<div>
+<h4>Event names you can hook</h4>
+<p><span class="pill">project_trust</span><span class="pill">resources_discover</span><span class="pill">session_start</span><span class="pill">session_info_changed</span><span class="pill">session_before_switch</span><span class="pill">session_before_fork</span><span class="pill">session_before_compact</span><span class="pill">session_compact</span><span class="pill">session_compact_failed</span><span class="pill">session_before_tree</span><span class="pill">session_tree</span><span class="pill">session_shutdown</span><span class="pill">before_agent_start</span><span class="pill">agent_start</span><span class="pill">agent_end</span><span class="pill">agent_settled</span><span class="pill">turn_start</span><span class="pill">turn_end</span><span class="pill">message_start</span><span class="pill">message_update</span><span class="pill">message_end</span><span class="pill">context</span><span class="pill">before_provider_headers</span><span class="pill">before_provider_request</span><span class="pill">after_provider_response</span><span class="pill">model_select</span><span class="pill">thinking_level_select</span><span class="pill">tool_execution_start</span><span class="pill">tool_call</span><span class="pill">tool_execution_update</span><span class="pill">tool_result</span><span class="pill">tool_execution_end</span><span class="pill">user_bash</span><span class="pill">input</span><span class="pill">ui_prompt_start</span><span class="pill">ui_prompt_end</span></p>
+<h4 style="margin-top:16px">Return values that matter</h4>
+<ul>
+<li><code>project_trust</code> → <code>{ trusted, remember? }</code></li>
+<li><code>session_before_*</code> → <code>{ cancel: true }</code></li>
+<li><code>before_agent_start</code> → <code>{ message?, systemPrompt? }</code></li>
+<li><code>message_end</code> → <code>{ message }</code> (same role)</li>
+<li><code>context</code> → <code>{ messages }</code></li>
+<li><code>tool_call</code> → <code>{ block, reason?, terminate? }</code></li>
+<li><code>tool_result</code> → <code>{ content?, details?, isError?, usage? }</code></li>
+<li><code>user_bash</code> → <code>{ operations } | { result }</code></li>
+<li><code>input</code> → <code>{ action: "continue" | "transform" | "handled" }</code></li>
+</ul></div>
+<div>
+<h4>Defaults &amp; constants</h4>
+<ul>
+<li>Thinking levels: <code>off · minimal · low · medium · high · xhigh · max</code></li>
+<li>Tool output ceiling: <b>50KB / 2000 lines</b> — see <code>pi-tools.html</code> §6</li>
+<li><code>CONFIG_DIR_NAME</code> instead of a hardcoded <code>".pi"</code></li>
+<li>Duplicate command names → <code>/name:1</code>, <code>/name:2</code> in load order</li>
+<li><code>pi.getCommands()</code> order: extensions → prompt templates → skills</li>
+</ul>
+<h4 style="margin-top:16px">Where to go deeper</h4>
+<ul>
+<li><code>docs/extensions.md</code> — the full API reference this page distills.</li>
+<li><code>docs/tui.md</code> — component API, overlay options, component patterns.</li>
+<li><code>docs/packages.md</code> — shipping extensions via npm/git as pi packages.</li>
+<li><code>docs/custom-provider.md</code> — provider config, OAuth, custom streaming.</li>
+<li><code>docs/keybindings.md</code> · <code>docs/themes.md</code> · <code>docs/session-format.md</code> · <code>docs/rpc.md</code>.</li>
+<li><code>examples/extensions/</code> — every recipe in the table above.</li>
+</ul></div></div>
+
+<div class="box ok"><b class="h">The 30-second summary</b>
+<ol style="margin-bottom:0">
+<li>Export a <code>default function (pi: ExtensionAPI)</code>; drop it in <code>~/.pi/agent/extensions/</code> or <code>.pi/extensions/</code>; edit + <code>/reload</code>.</li>
+<li><code>pi.on(event, handler)</code> to observe, block, or transform the run — <code>tool_call</code> and <code>tool_result</code> are the workhorses.</li>
+<li><code>pi.register{ Tool, Command, Shortcut, Flag, Renderer, Provider }</code> to add capability; anything shared lives in the factory closure.</li>
+<li>Store state in tool-result <code>details</code> (branch-safe) or <code>appendEntry</code> (durable, TUI-only); rebuild in <code>session_start</code>.</li>
+<li>Guard with <code>ctx.mode</code>/<code>ctx.hasUI</code>, pass <code>ctx.signal</code> to async work, close resources in <code>session_shutdown</code>.</li>
+</ol></div>
+</section>
+
+<p class="small dim center" style="margin-top:44px">…</p>
+</main>
+</body>
+</html>

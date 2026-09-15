@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi Customization Guide — how it really works</title>
+<style>
+:root{
+  --bg:#0b0f14; --panel:#11161d; --panel2:#151c25; --line:#26303c; --line2:#32404f;
+  --text:#d9e0e8; --muted:#8b98a5; --dim:#5e6a76; --accent:#7aa2ff;
+  --mono:"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+  --sans:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15.5px/1.55 var(--sans)}
+main{max-width:1180px;margin:0 auto;padding:28px 22px 120px}
+h1,h2,h3,h4{font-family:var(--sans);line-height:1.25}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,.k{font-family:var(--mono);font-size:.9em;background:rgba(122,162,255,.09);border:1px solid rgba(122,162,255,.18);border-radius:5px;padding:.5px 5px;color:#a5c1ff;white-space:nowrap}
+pre.code{background:#0a0e13;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#c9d4df}
+pre.code b{color:#7ee787}.pre2{background:#0a0e13}
+
+/* ---------- nav ---------- */
+nav{position:sticky;top:0;z-index:50;background:rgba(11,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+nav .inner{max-width:1180px;margin:0 auto;padding:8px 22px;display:flex;align-items:center;gap:18px;overflow-x:auto;white-space:nowrap}
+nav .brand{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:14px}
+nav a{color:var(--muted);font-size:12.5px;padding:4px 2px;border-bottom:2px solid transparent}
+nav a:hover{color:var(--text);text-decoration:none;border-bottom-color:var(--accent)}
+
+/* ---------- hero ---------- */
+.hero{border:1px solid var(--line2);border-radius:16px;background:radial-gradient(1000px 300px at 20% -10%,rgba(122,162,255,.13),transparent),radial-gradient(700px 260px at 90% 0%,rgba(188,140,255,.1),transparent),var(--panel);padding:30px 32px;margin:26px 0 12px}
+.hero h1{margin:0 0 6px;font-size:30px}
+.hero h1 .pi{color:var(--accent)}
+.hero .sub{color:var(--muted);max-width:820px;font-size:15.5px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chip{border:1px solid var(--line2);border-radius:999px;padding:3px 11px;font-size:12px;color:var(--muted);background:var(--panel2)}
+
+/* ---------- sections ---------- */
+section{margin:54px 0 0;scroll-margin-top:70px}
+h2{font-size:23px;display:flex;align-items:center;gap:12px;margin:0 0 4px}
+.secnum{font-family:var(--mono);font-size:13px;color:#0b0f14;background:var(--accent);border-radius:8px;padding:3px 9px;font-weight:800;flex:none}
+h2 .tag{font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:2px 10px}
+section>p.lede{color:var(--muted);max-width:860px;margin:6px 0 18px}
+h3{font-size:16.5px;margin:34px 0 8px;padding-left:10px;border-left:3px solid var(--accent)}
+h4{font-size:14px;margin:20px 0 6px;color:#b9c5d2}
+p{margin:10px 0}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:3px 0}
+.muted{color:var(--muted)} .dim{color:var(--dim)} .small{font-size:12.5px}
+
+/* callouts */
+.box{border:1px solid var(--line2);border-left:4px solid var(--c,#58a6ff);border-radius:10px;padding:11px 15px;margin:14px 0;background:var(--panel)}
+.box b.h{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--c,#58a6ff);margin-bottom:4px}
+.box.warn{--c:#e3b341;background:rgba(227,179,65,.05)}
+.box.sec{--c:#f85149;background:rgba(248,81,73,.05)}
+.box.ok{--c:#3fb950;background:rgba(63,185,80,.05)}
+.box.info{--c:#58a6ff;background:rgba(88,166,255,.05)}
+
+/* ---------- diagram atoms ---------- */
+.fig{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px;margin:16px 0;overflow-x:auto}
+.fig .cap{font-size:12px;color:var(--dim);margin-bottom:12px;font-family:var(--mono)}
+.vflow{display:flex;flex-direction:column;align-items:stretch;min-width:560px;row-gap:8px}
+.hflow{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap;min-width:700px}
+.n{border:1.5px solid var(--c,#7aa2ff);background:var(--bgc,rgba(122,162,255,.07));border-radius:11px;padding:9px 14px;line-height:1.4;font-size:13.5px}
+.n b{display:block;font-size:13px;color:var(--tc,#dbe6ff)}
+.n .s{color:var(--muted);font-size:12px;display:block}
+.n code{background:transparent;border:none;padding:0;color:inherit;font-size:11.5px;white-space:normal}
+.n.wide{flex:1 1 auto}
+.n.lg{flex:1}
+.n.tall{min-height:64px;display:flex;flex-direction:column;justify-content:center}
+.n.dim{border-style:dashed;--c:#5e6a76;--bgc:rgba(94,106,118,.05)}
+.n.ghost{border-style:dotted;opacity:.8}
+.kbd{cursor:default}
+a-d,.a-d{text-align:center;color:var(--dim);font-size:13px;line-height:13px;padding:2px 0;user-select:none}
+.a-d span{display:block;font-size:11px;color:var(--muted);line-height:13px}
+.a-r{display:flex;align-items:center;color:var(--dim);font-size:13px;padding:0 8px;user-select:none;white-space:nowrap;flex:none}
+.a-r span{font-size:10.5px;color:var(--muted);display:block;text-align:center;line-height:12px}
+.row{display:flex;align-items:center;gap:8px;margin:4px 0}
+/* colors */
+.c-settings{--c:#58a6ff;--bgc:rgba(88,166,255,.07);--tc:#cfe0ff}
+.c-trust{--c:#f0883e;--bgc:rgba(240,136,62,.08);--tc:#ffd7b8}
+.c-core{--c:#7aa2ff;--bgc:rgba(122,162,255,.07);--tc:#dbe6ff}
+.c-ext{--c:#bc8cff;--bgc:rgba(188,140,255,.08);--tc:#e8daff}
+.c-skill{--c:#56d4dd;--bgc:rgba(86,212,221,.07);--tc:#d2f6f9}
+.c-prompt{--c:#39c5cf;--bgc:rgba(57,197,207,.07);--tc:#d0f4f6}
+.c-theme{--c:#f778ba;--bgc:rgba(247,120,186,.07);--tc:#ffd6ec}
+.c-pkg{--c:#e3b341;--bgc:rgba(227,179,65,.07);--tc:#fae8bd}
+.c-kb{--c:#ff7b72;--bgc:rgba(255,123,114,.07);--tc:#ffd7d4}
+.c-env{--c:#8b98a5;--bgc:rgba(139,152,165,.08);--tc:#e4eaf0}
+.c-model{--c:#a5b4fc;--bgc:rgba(165,180,252,.07);--tc:#e3e8ff}
+.c-ok{--c:#3fb950;--bgc:rgba(63,185,80,.08);--tc:#c9f5d2}
+.c-err{--c:#f85149;--bgc:rgba(248,81,73,.08);--tc:#ffd0ce}
+.c-warn{--c:#e3b341;--bgc:rgba(227,179,65,.07);--tc:#fae8bd}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.legend .n{font-size:11.5px;padding:3px 10px;border-radius:999px}
+
+/* decision diamond-ish */
+.dec{border-radius:6px;transform:none}
+/* fork / join */
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0}
+.fork3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:0}
+.lbl{text-align:center;color:var(--muted);font-size:11.5px;padding:2px 0;letter-spacing:.3px}
+.center{text-align:center}
+
+/* nest (sub-flow inside a flow) */
+.nest{border-left:2px solid var(--line2);margin:6px 0 6px 14px;padding-left:14px}
+.nest > * + *{margin-top:8px}
+.stage{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);margin:14px 0 6px}
+
+/* ---------- tables ---------- */
+.twrap{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:12px}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.tbl th{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);text-align:left;padding:9px 12px;border-bottom:1px solid var(--line2);background:var(--panel2);position:sticky;top:44px}
+.tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(122,162,255,.03)}
+.tbl td b{color:#c9d4df}
+.tbl td code{white-space:normal}
+
+/* details callout */
+details.call{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:14px 0}
+details.call summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;color:#b9c5d2}
+details.call summary::marker{color:var(--accent)}
+details.call .body{padding:2px 18px 14px}
+
+/* tree */
+.tree{font-family:var(--mono);font-size:13px;line-height:1.7}
+.tl{display:flex;gap:12px;padding:0 6px;border-radius:6px}
+.tl:hover{background:rgba(122,162,255,.05)}
+.tl .path{color:#c9d4df;white-space:pre}
+.tl .path .d{color:var(--dim)}
+.tl .note{margin-left:auto;color:var(--muted);font-family:var(--sans);font-size:12px;white-space:normal;max-width:380px;text-align:right}
+.tl .note em{color:var(--dim);font-style:normal}
+.tl .ic{color:var(--c,var(--accent));flex:none}
+.tl.lvl1{padding-left:26px}.tl.lvl2{padding-left:52px}.tl.lvl3{padding-left:78px}
+
+/* cards grid */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:14px 0}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:13px 15px}
+.card h4{margin:0 0 6px;font-size:13.5px}
+.card h4 code{font-size:12px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+
+/* decision matrix, cheat grid */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:900px){.duo{grid-template-columns:1fr}.fork3{grid-template-columns:1fr}}
+kbd{font-family:var(--mono);font-size:11.5px;background:var(--panel2);border:1px solid var(--line2);border-bottom-width:2.5px;border-radius:6px;padding:1.5px 6px;color:#dbe4ee}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--line2);border-radius:999px;padding:1px 9px;color:var(--muted);margin:0 4px 4px 0;background:var(--panel2)}
+footer{margin-top:70px;border-top:1px solid var(--line);padding-top:18px;color:var(--dim);font-size:13px}
+.toc{columns:2;column-gap:36px}
+@media(max-width:760px){.toc{columns:1}}
+.toc a{display:block;color:var(--muted);padding:3px 0;font-size:13.5px}
+.toc a b{color:var(--accent);font-family:var(--mono);font-size:11.5px;margin-right:8px}
+.hl{background:linear-gradient(180deg,transparent 62%,rgba(227,179,65,.35) 62%)}
+big{font-size:16px}
+</style>
+</head>
+<body>
+<nav><div class="inner">
+  <span class="brand">π customize</span>
+  <a href="#s0">Map</a><a href="#s1">Filesystem</a><a href="#s2">Settings</a><a href="#s3">Trust</a>
+  <a href="#s4">Discovery</a><a href="#s5">Prompts</a><a href="#s6">Skills</a><a href="#s7">Themes</a>
+  <a href="#s8">Extensions</a><a href="#s9">Packages</a><a href="#s10">Keys</a><a href="#s11">Models</a>
+  <a href="#s12">Env vars</a><a href="#s13">Cheat sheet</a>
+</div></nav>
+
+<main>
+<div class="hero">
+  <h1><span class="pi">π</span> Customization Guide — how it <em>really</em> works</h1>
+  <p class="sub">Pi is a small terminal coding agent whose core is extended through five resource types — <b>extensions</b>, <b>skills</b>, <b>prompt templates</b>, <b>themes</b>, and <b>pi packages</b> — configured by layered <b>settings</b> files, guarded by a <b>project trust</b> decision. This page explains every customization surface and the mechanics behind it, as flow graphs. Everything is distilled from the official docs shipped with pi.</p>
+  <div class="chips">
+    <span class="chip">📄 standalone HTML · works offline from <code>file://</code></span>
+    <span class="chip">🧭 no JS required</span>
+    <span class="chip">🎨 diagrams: HTML/CSS flow graphs</span>
+  </div>
+</div>
+
+<div class="box info"><b class="h">Color legend — used in every diagram</b>
+<div class="legend">
+  <span class="n c-core">core pi</span><span class="n c-settings">settings / config</span><span class="n c-trust">trust gate</span>
+  <span class="n c-ext">extensions</span><span class="n c-skill">skills</span><span class="n c-prompt">prompts</span><span class="n c-theme">themes</span>
+  <span class="n c-pkg">packages</span><span class="n c-kb">keybindings</span><span class="n c-model">models/providers</span><span class="n c-env">environment</span>
+  <span class="n c-ok">yes / loads</span><span class="n c-err">no / blocked</span><span class="n c-warn">decision</span>
+</div>
+<p class="small muted">Arrows show order &amp; data flow. Dashed nodes are optional paths. Node categories keep the same color across all sections, so a green “loads” box means the same thing everywhere.</p></div>
+
+<div class="box sec"><b class="h">Security reality check — read this first</b>
+Everything pi loads from a project is <b>code or instructions that can act on your machine</b>. Extensions run with your full permissions. Skills can tell the model to run any command. That is exactly why the <b>project-trust gate</b> (section 3) exists, and why every “where do I put files” answer below is qualified by “after the project is trusted”.</div>
+
+<!--TOC-->
+<details class="call"><summary>Contents (14 sections)</summary><div class="body toc">
+  <a href="#s0"><b>0</b>Mental model — the one diagram</a>
+  <a href="#s1"><b>1</b>Where everything lives on disk</a>
+  <a href="#s2"><b>2</b>Settings — layers, merge, precedence</a>
+  <a href="#s3"><b>3</b>The project-trust gate</a>
+  <a href="#s4"><b>4</b>Resource discovery pipeline</a>
+  <a href="#s5"><b>5</b>Prompt templates</a>
+  <a href="#s6"><b>6</b>Skills (Agent Skills)</a>
+  <a href="#s7"><b>7</b>Themes</a>
+  <a href="#s8"><b>8</b>Extensions</a>
+  <a href="#s9"><b>9</b>Pi packages</a>
+  <a href="#s10"><b>10</b>Keybindings</a>
+  <a href="#s11"><b>11</b>Custom models &amp; providers</a>
+  <a href="#s12"><b>12</b>Environment variables</a>
+  <a href="#s13"><b>13</b>Cheat sheets &amp; reference</a>
+</div></details>
+<section id="s0">
+<h2><span class="secnum">0</span>Mental model — how customization attaches to core <span class="tag">overview</span></h2>
+<p class="lede">One picture to hold the whole thing: pi itself is the engine (TUI + agent loop + session store). You never edit the engine — you attach <b>resources</b> to it from many places on disk, and you steer it with <b>settings</b>. Every later section is a zoom into one spoke.</p>
+
+<div class="fig"><div class="cap">FIG 0 · the whole system in one flow</div>
+<div class="vflow">
+<div class="n c-core lg center"><b>pi core — starts once per run</b><span class="s">reads settings → resolves trust → discovers resources → boots model + TUI + agent loop</span></div>
+<div class="a-d">▼<span>feeds (2 inputs below)</span></div>
+<div class="fork">
+  <div class="n c-settings"><b>1 · configuration</b><span class="s"><code>settings.json</code> ×2 (global + project) merged → <b>active config</b> that decides defaults, theme, tools, packages… (sec 2)</span></div>
+  <div class="n c-trust"><b>2 · trust decision</b><span class="s">gate in front of everything project-local: <code>trust.json</code> / prompt / <code>defaultProjectTrust</code> (sec 3)</span></div>
+</div>
+<div class="a-d">▼<span>trusted run</span></div>
+<div class="n c-ext wide"><b>resource discovery (sec 4)</b><span class="s">all sources → one loader per type → registries: extensions · skills · prompts · themes (+ models &amp; keybindings are separate config files)</span></div>
+<div class="a-d">▼<span>loaded into</span></div>
+<div class="n c-core wide"><b>your pi session</b><span class="s">extensions hook the lifecycle · skills sit in the system prompt as descriptions · prompts expand in the editor · theme colors the TUI · packages bundle any of the above</span></div>
+</div>
+</div>
+
+<p>Six facts explain almost everything:</p>
+<div class="cards">
+  <div class="card"><h4>1 · Global &amp; project</h4><p>Everything is either <code>~/.pi/agent/…</code> (applies to all projects) or <code>.pi/…</code> in your project folder (applies only there, and only once the project is <b>trusted</b>).</p></div>
+  <div class="card"><h4>2 · Project wins</h4><p>When the same setting exists in both files, the project value overrides the global one; nested objects are <b>merged</b>, not replaced.</p></div>
+  <div class="card"><h4>3 · Settings point at resources</h4><p><code>packages</code>/<code>extensions</code>/<code>skills</code>/<code>prompts</code>/<code>themes</code> arrays in settings are just <b>pointers</b> to more files — relative paths resolve against the settings file they live in.</p></div>
+  <div class="card"><h4>4 · Discovery ≠ loading</h4><p>Skills are only <i>described</i> in the system prompt and load on demand (progressive disclosure). Extensions &amp; themes load fully at startup. Prompts load when you type <code>/name</code>.</p></div>
+  <div class="card"><h4>5 · Trust is the lock</h4><p>Project <code>.pi</code> resources, <code>.agents/skills</code>, and missing packages stay locked until the trust decision lets them in. Global files are never gated.</p></div>
+  <div class="card"><h4>6 · Code &gt; config</h4><p>Extensions (TypeScript) can do <i>anything</i> config can, plus events, tools, UI and providers. When you outgrow JSON, you drop to an extension.</p></div>
+</div>
+</section>
+
+<section id="s1">
+<h2><span class="secnum">1</span>Where everything lives on disk <span class="tag">filesystem</span></h2>
+<p class="lede">Two trees matter. The <b>global config dir</b> (<code>~/.pi/agent</code> — override with <code>PI_CODING_AGENT_DIR</code>) and the per-project <b><code>.pi/</code> dir</b>. Package installs live in sibling caches. Sibling <code>.agents/skills</code> dirs (the cross-harness standard) are also scanned.</p>
+
+<div class="fig"><div class="cap">FIG 1 · config directory trees (checkmark = auto-discovered, no settings needed)</div>
+<div class="tree">
+  <div class="tl c-settings"><span class="ic">◆</span><span class="path">~/.pi/agent/                  <span class="d">— global config dir (all projects)</span></span></div>
+  <div class="tl c-settings"><span class="ic">├</span><span class="path">settings.json</span><span class="note">global settings — the layer under every project (sec 2)</span></div>
+  <div class="tl c-kb"><span class="ic">├</span><span class="path">keybindings.json</span><span class="note">your key remaps (sec 10)</span></div>
+  <div class="tl c-trust"><span class="ic">├</span><span class="path">trust.json</span><span class="note">saved “trust this folder?” decisions (sec 3)</span></div>
+  <div class="tl c-model"><span class="ic">├</span><span class="path">models.json</span><span class="note">custom providers/models, e.g. Ollama (sec 11)</span></div>
+  <div class="tl c-model"><span class="ic">├</span><span class="path">auth.json</span><span class="note">API keys / OAuth tokens saved via <code>/login</code></span></div>
+  <div class="tl c-ext"><span class="ic">├</span><span class="path">extensions/*.ts  ·  */index.ts</span><span class="note">✅ auto-discovered extensions</span></div>
+  <div class="tl c-skill"><span class="ic">├</span><span class="path">skills/            SKILL.md dirs</span><span class="note">✅ auto-discovered skills</span></div>
+  <div class="tl c-prompt"><span class="ic">├</span><span class="path">prompts/*.md</span><span class="note">✅ auto-discovered templates</span></div>
+  <div class="tl c-theme"><span class="ic">├</span><span class="path">themes/*.json</span><span class="note">✅ auto-discovered themes</span></div>
+  <div class="tl c-pkg"><span class="ic">├</span><span class="path">npm/</span><span class="note">user-scope npm packages install here (<code>pi install</code>)</span></div>
+  <div class="tl c-pkg"><span class="ic">├</span><span class="path">git/&lt;host&gt;/&lt;path&gt;</span><span class="note">user-scope git packages cloned here</span></div>
+  <div class="tl c-skill"><span class="ic">◆</span><span class="path">~/.agents/skills/</span><span class="note">cross-harness standard location (Claude/Codex compat) — also scanned</span></div>
+  <div class="tl c-env"><span class="ic">┈</span><span class="path">…and per project: <b>./.pi/</b></span><span class="note">exact same subfolders, project scope (settings.json, extensions/, skills/, prompts/, themes/, npm/, git/)</span></div>
+  <div class="tl c-trust"><span class="ic">┈</span><span class="path">…and ancestors: <b>.agents/skills/</b></span><span class="note">in cwd and parents up to the git root (skills only)</span></div>
+</div>
+<div class="box warn"><b class="h">Relative paths inside settings are relative to that settings file</b>In <code>~/.pi/agent/settings.json</code> paths resolve against <code>~/.pi/agent</code>; in <code>.pi/settings.json</code> they resolve against <code>.pi</code>. <code>~</code> and absolute paths always work. So <code>"skills": ["~/.claude/skills"]</code> reaches other tools’ skills, and a project can point at <code>"../.claude/skills"</code>.</div>
+</div>
+
+<p class="muted small">Global vs project is a spectrum, not a wall: the same package can be listed in both files, and packages/trust interplay decides who wins (sections 3 &amp; 9).</p>
+</section>
+<section id="s2">
+<h2><span class="secnum">2</span>Settings — layers, merge, precedence <span class="tag">settings.json</span></h2>
+<p class="lede">Pi config is plain JSON in two files. The <b>project file overrides the global file</b>, and nested objects merge field-by-field. There is no third layer and no include mechanism — the merge IS the whole precedence story.</p>
+
+<div class="fig"><div class="cap">FIG 2 · how the active config is produced</div>
+<div class="vflow">
+  <div class="n c-settings"><b>built-in defaults</b><span class="s">compiled into pi — theme <code>dark</code>, tools on, etc.</span></div>
+  <div class="a-d">▼<span>overlay</span></div>
+  <div class="n c-settings"><b>~/.pi/agent/settings.json — global layer</b><span class="s">your defaults for every project (provider, theme, packages, keybindings-free…)</span></div>
+  <div class="a-d">▼<span>overlay &amp; merge</span></div>
+  <div class="n c-trust"><b>trust gate (sec 3)</b><span class="s">does this project let <code>.pi/settings.json</code> in?</span></div>
+  <div class="a-d">▼<span>if trusted</span></div>
+  <div class="n c-settings"><b>.pi/settings.json — project layer</b><span class="s">per-project overrides; scalars replace, nested objects merge</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok wide"><b>active config</b><span class="s">what the run actually uses. CLI flags (<code>--theme</code>, <code>--model</code>, <code>--tools</code>…) and a few env vars override pieces of it for one run without saving</span></div>
+</div>
+</div>
+
+<h3>Merge — nested objects combine, they don’t replace</h3>
+<pre class="code">// ~/.pi/agent/settings.json (global)
+{ "theme": "dark",
+  "compaction": { "enabled": true, "reserveTokens": 16384 } }
+
+// .pi/settings.json (project)          →  merged result
+{ "compaction": { "reserveTokens": 8192 } }   →  { "theme": "dark",
+                                                       "compaction": { "enabled": true, "reserveTokens": 8192 } }</pre>
+
+<h3>How values get saved — the Ctrl+S routes</h3>
+<div class="fig"><div class="cap">FIG 3 · interactive knobs write into which layer</div>
+<div class="vflow">
+  <div class="fork">
+    <div class="n c-settings tall"><b><code>/settings</code> menu</b><span class="s">toggle switches for many options (theme, tools, warnings…)</span></div>
+    <div class="n c-settings tall"><b><code>/model</code> + <kbd>Ctrl</kbd>+<kbd>S</kbd></b><span class="s">saves startup provider/model</span></div>
+    <div class="n c-settings tall"><b><code>/thinking</code> + <kbd>Ctrl</kbd>+<kbd>S</kbd></b><span class="s">saves default thinking level</span></div>
+  </div>
+  <div class="a-d">▼<span>all three write the SAME file</span></div>
+  <div class="n c-settings center"><b>~/.pi/agent/settings.json</b><span class="s">interactive saves go global by default (that’s why they apply to every project)</span></div>
+</div>
+<p class="small muted">There is no per-project equivalent of the /settings UI — edit <code>.pi/settings.json</code> by hand if you want a project-scoped value, or install packages with <code>pi install -l</code> to record them project-locally (sec 9).</p></div>
+
+<h3>The settings groups</h3>
+<p>Full reference is <code>docs/settings.md</code>. The groups and the entries you’ll touch most:</p>
+<div class="twrap"><table class="tbl">
+<tr><th style="width:17%">Group</th><th>Settings</th><th>What it controls</th></tr>
+<tr><td><b>Model &amp; thinking</b></td><td><code>defaultProvider</code> · <code>defaultModel</code> · <code>defaultThinkingLevel</code> · <code>modelThinkingLevels</code> · <code>hideThinkingBlock</code> · <code>thinkingBudgets</code></td><td>startup model/thinking (<code>off|minimal|low|medium|high|xhigh|max</code>); per-model thinking map keyed <code>"provider/modelId"</code>; custom token budgets per level</td></tr>
+<tr><td><b>UI &amp; display</b></td><td><code>theme</code> · <code>externalEditor</code> · <code>quietStartup</code> · <code>editorPaddingX</code> · <code>outputPad</code> · <code>autocompleteMaxVisible</code> · <code>showHardwareCursor</code> · <code>tuiMode</code> · <code>fullscreen*</code></td><td>look &amp; feel: which theme, Ctrl+G editor command, TUI regular/fullscreen, padding</td></tr>
+<tr><td><b>Trust</b></td><td><code>defaultProjectTrust</code></td><td><b>global-only</b>: <code>ask</code> (default) | <code>always</code> | <code>never</code> — fallback when no saved decision (sec 3)</td></tr>
+<tr><td><b>Network</b></td><td><code>httpProxy</code></td><td><b>global-only</b> proxy URL applied as <code>HTTP_PROXY</code>/<code>HTTPS_PROXY</code></td></tr>
+<tr><td><b>Warnings / compaction / retry</b></td><td><code>warnings.anthropicExtraUsage</code> · <code>compaction.{enabled,reserveTokens,keepRecentTokens,…}</code> · <code>retry.{enabled,maxRetries}</code></td><td>transcript warnings; auto-compaction budget; provider retry behavior</td></tr>
+<tr><td><b>Tools</b></td><td><code>defaultTools</code></td><td>initial built-ins: <code>read</code> <code>bash</code> <code>powershell</code> <code>edit</code> <code>write</code> <code>grep</code> <code>find</code> <code>ls</code>. Project array replaces global array</td></tr>
+<tr><td><b>Sessions</b></td><td><code>sessionDir</code></td><td>where session files live. Precedence: <code>--session-dir</code> &gt; <code>PI_CODING_AGENT_SESSION_DIR</code> &gt; this setting</td></tr>
+<tr><td><b>Model cycling</b></td><td><code>enabledModels</code></td><td>globs for <kbd>Ctrl</kbd>+<kbd>P</kbd> cycling, e.g. <code>["claude-*","gpt-4o"]</code></td></tr>
+<tr><td><b>Markdown</b></td><td><code>markdown.codeBlockIndent</code> · <code>markdown.mermaid</code></td><td>code block indent; mermaid render <code>off|final|streaming</code></td></tr>
+<tr><td><b>Resources</b></td><td><code>packages</code> · <code>extensions</code> · <code>skills</code> · <code>prompts</code> · <code>themes</code> · <code>enableSkillCommands</code></td><td>extra load paths for every resource type + whether skills register as <code>/skill:name</code> (default true)</td></tr>
+<tr><td><b>npm</b></td><td><code>npmCommand</code></td><td>pin the npm wrapper used for all package ops, e.g. <code>["mise","exec","node@20","--","npm"]</code></td></tr>
+</table></div>
+
+<div class="box ok"><b class="h">Layer rules worth memorizing</b>
+<ul><li>Global <i>scalar</i> overridden by project <i>scalar</i>; global <i>object</i> deep-merged with project <i>object</i>.</li>
+<li><code>defaultProjectTrust</code> and <code>httpProxy</code> are global-only — project files can’t set them.</li>
+<li>A project <code>defaultTools</code> <b>replaces</b> the global array (arrays don’t merge).</li>
+<li>Env vars &amp; flags are a fourth, run-scoped influence: e.g. <code>--session-dir</code> &gt; <code>PI_CODING_AGENT_SESSION_DIR</code> &gt; <code>sessionDir</code>; <code>--tools</code> replaces <code>defaultTools</code> with a strict allowlist.</li></ul></div>
+</section>
+
+<section id="s3">
+<h2><span class="secnum">3</span>The project-trust gate <span class="tag">trust.json</span></h2>
+<p class="lede">Pi treats every project folder as untrusted until proven otherwise. Project-local settings, resources and <code>.agents/skills</code> are simply <i>not loaded</i> until the trust decision passes — this is the security boundary that makes the whole model safe.</p>
+
+<div class="fig"><div class="cap">FIG 4 · what happens at startup (interactive)</div>
+<div class="vflow">
+  <div class="n c-core center"><b>pi starts in a project folder</b><span class="s">does the folder (or a parent) carry <code>.pi/</code> config · resources · <code>.agents/skills</code>?</span></div>
+  <div class="a-d">▼<span>yes to any — is there a saved decision for this folder or a parent?</span></div>
+  <div class="fork">
+    <div class="n c-ok"><b>trust.json has one</b><span class="s">previously saved via the prompt or <code>/trust</code> — apply it silently</span></div>
+    <div class="n c-warn"><b>no saved decision</b><span class="s">ask: “Trust this project?” → yes / yes-remember / no</span></div>
+  </div>
+  <div class="a-d">▼<span>trusted</span></div>
+  <div class="n c-ok wide"><b>project unlocks</b><span class="s">load <code>.pi/settings.json</code> + <code>.pi</code> resources · install missing project packages · run project extensions · scan project <code>.agents/skills</code></span></div>
+  <div class="n c-err wide" style="margin-top:8px"><b>not trusted</b><span class="s">project layer ignored for this run; only global config applies</span></div>
+</div>
+<div class="box warn"><b class="h">Non-interactive modes never prompt</b>
+<code>-p</code>, <code>--mode json</code>, <code>--mode rpc</code> skip the prompt and fall back to <code>defaultProjectTrust</code>: <code>ask</code> (default, = ignore project resources) · <code>never</code> (= ignore) · <code>always</code> (= trust). Override per-run with <code>--approve</code>/<code>-a</code> or <code>--no-approve</code>/<code>-na</code>. <code>pi config</code> and package commands use the same flow; <code>pi update</code> never prompts.</div>
+
+<div class="duo">
+<div>
+<h3>The decision flow in one line</h3>
+<p>Extensions first (sec 8: a <code>project_trust</code> handler can answer for you) → saved <code>trust.json</code> decisions (first match wins) → <code>defaultProjectTrust</code> decides whether pi asks, trusts, or declines.</p>
+</div>
+<div>
+<h3>Save a decision: <code>/trust</code></h3>
+<p>Writes <code>~/.pi/agent/trust.json</code> only (current session isn’t reloaded — restart to apply). Decisions cover the current folder <i>and</i> the immediate parent.</p>
+</div>
+</div>
+<p class="small muted">Theme/skill dirs under <code>~/.pi/agent</code> and <code>~/.agents</code> are global, never gated. Only the project-scope dots are behind the gate.</p>
+</section>
+
+<section id="s4">
+<h2><span class="secnum">4</span>Resource discovery pipeline <span class="tag">the loaders</span></h2>
+<p class="lede">Extensions, skills, prompt templates and themes all flow through the same discovery machine with per-type rules. Models and keybindings don’t — they are plain config files read directly. This section is the zoomed view of the middle of FIG 0.</p>
+
+<div class="fig"><div class="cap">FIG 5 · one pipeline, four resource types</div>
+<div class="vflow">
+  <div class="n c-core center"><b>source harvest — every place each type can come from</b><span class="s">built-in defaults · global dir <code>~/.pi/agent/&lt;type&gt;/</code> · project dir <code>.pi/&lt;type&gt;/</code> · <code>.agents/skills</code> ancestors (skills) · installed packages (their <code>pi</code> manifest / convention dirs) · <code>settings.json</code> arrays · CLI flags (<code>--skill</code>, <code>--theme</code>, <code>--prompt-template</code>, <code>-e</code>)</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-trust center"><b>trust filter</b><span class="s">project &amp; ancestor sources require the sec-3 decision; untrusted project items are dropped here</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-warn center"><b>shape filter + exclusion flags</b><span class="s">per-type rules (below) · kill-switches: <code>--no-skills</code> <code>--no-themes</code> <code>--no-prompt-templates</code> (+ explicit CLI paths still load) · glob <code>!</code> excludes · settings arrays accept <code>+path</code> force-include / <code>-path</code> force-exclude</span></div>
+  <div class="a-d">▼</div>
+  <div class="fork3">
+    <div class="n c-ext tall"><b>extensions</b><span class="s">executed (jiti-imported TS) at startup</span></div>
+    <div class="n c-theme tall"><b>themes</b><span class="s">parsed into color tokens; active one hot-reloads</span></div>
+    <div class="n c-skill c-prompt tall"><b>skills / prompts</b><span class="s">indexed now (names + descriptions); bodies read later (skills) or on <code>/name</code> (prompts)</span></div>
+  </div>
+  <div class="a-d">▼</div>
+  <div class="n c-core center"><b>session registries</b><span class="s">extensions registered as tools/commands/handlers · skills listed in the system prompt · prompts in autocomplete · theme applied to TUI</span></div>
+</div>
+</div>
+
+<h3>Per-type discovery rules</h3>
+<div class="twrap"><table class="tbl">
+<tr><th>Type</th><th>Auto-discovered shapes</th><th>Special rules</th><th>Reload</th></tr>
+<tr><td><b class="c-ext" style="color:#bc8cff">extensions</b></td><td><code>*.ts</code> files or <code>*/index.ts</code> dirs under <code>~/.pi/agent/extensions/</code> &amp; <code>.pi/extensions/</code></td><td>loaded via jiti so TypeScript runs directly; local <code>package.json</code> next to an extension resolves its npm imports; project-local entries load only after trust</td><td><code>/reload</code> hot-reloads auto-discovered ones</td></tr>
+<tr><td><b class="c-skill" style="color:#56d4dd">skills</b></td><td>dirs containing <code>SKILL.md</code> (recursive); in <code>~/.pi/agent/skills/</code> &amp; <code>.pi/skills/</code> also bare root <code>*.md</code> with skill frontmatter</td><td><code>~/.agents/skills</code> &amp; project <code>.agents/skills</code>: root <code>.md</code> ignored, nested <code>.md</code> in grouping folders with frontmatter discovered; non-skill md ignored silently</td><td>re-indexed on reload</td></tr>
+<tr><td><b class="c-prompt" style="color:#39c5cf">prompts</b></td><td><code>*.md</code> under <code>~/.pi/agent/prompts/</code> &amp; <code>.pi/prompts/</code></td><td><b>non-recursive</b> in <code>prompts/</code> — subdirectories need explicit <code>prompts</code> settings or a package manifest</td><td>re-indexed on reload</td></tr>
+<tr><td><b class="c-theme" style="color:#f778ba">themes</b></td><td><code>*.json</code> under <code>~/.pi/agent/themes/</code> &amp; <code>.pi/themes/</code></td><td>active theme file edits hot-reload live</td><td>live</td></tr>
+</table></div>
+<p class="small muted">Every type also has a settings-array equivalent — <code>extensions</code>, <code>skills</code>, <code>prompts</code>, <code>themes</code> — which is how you reach files outside the convention dirs (e.g. another harness’ skills).</p>
+</section>
+<section id="s5">
+<h2><span class="secnum">5</span>Prompt templates <span class="tag">/name in the editor</span></h2>
+<p class="lede">Markdown snippets that expand into real prompts when you type <code>/name</code>. The filename (minus <code>.md</code>) is the command name, frontmatter carries the description, and positional arguments substitute into the body.</p>
+
+<div class="fig"><div class="cap">FIG 6 · what happens when you type a slash</div>
+<div class="vflow">
+  <div class="n c-core center"><b>editor: you type <code>/</code></b><span class="s">autocomplete lists templates: name → argument-hint → description (missing description? first non-empty line is used)</span></div>
+  <div class="a-d">▼<span>submit e.g. <code>/component Button "click handler"</code></span></div>
+  <div class="n c-prompt center"><b>template found: <code>prompts/component.md</code></b><span class="s">loaded from any discovery source (sec 4) — not the live session file, just a file read</span></div>
+  <div class="a-d">▼<span>substitution</span></div>
+  <div class="n c-prompt center"><b>arguments applied</b><span class="s"><code>$1</code>=Button · <code>$2</code>=click handler · <code>$@</code>/<code>$ARGUMENTS</code>=all · <code>${1:-default}</code> fallback · <code>${@:N}</code> / <code>${@:N:L}</code> slices</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok center"><b>expanded into the editor as your prompt</b><span class="s">you can still edit before sending; /review &amp; friends are just text, not commands</span></div>
+</div>
+</div>
+
+<div class="duo">
+<div><h3>Example</h3>
+<pre class="code">---
+description: Review staged git changes
+---
+Review the staged changes (<b>git diff --cached</b>). Focus on:
+- Bugs and logic errors
+- Security issues
+- Error handling gaps</pre>
+</div>
+<div><h3>Frontmatter</h3>
+<ul><li><code>description</code> — optional; falls back to first non-empty line.</li>
+<li><code>argument-hint</code> — optional; shown in autocomplete: <code>"&lt;PR-URL&gt;"</code> required vs <code>[instructions]</code> optional.</li></ul>
+<h3>Discovery recap</h3>
+<ul><li>Global <code>~/.pi/agent/prompts/*.md</code>, project <code>.pi/prompts/*.md</code> (trusted).</li>
+<li>Packages: <code>prompts/</code> dir or <code>pi.prompts</code> in manifest.</li>
+<li>Settings <code>prompts</code> array, CLI <code>--prompt-template &lt;path&gt;</code>; kill-switch <code>--no-prompt-templates</code>.</li>
+<li>Subdirs need explicit settings (non-recursive).</li></ul>
+</div></div>
+</section>
+
+<section id="s6">
+<h2><span class="secnum">6</span>Skills — Agent Skills <span class="tag">progressive disclosure</span></h2>
+<p class="lede">A skill is a folder with a <code>SKILL.md</code> (frontmatter + instructions) plus any scripts/references it needs. Pi implements the open <b>Agent Skills standard</b> (agentskills.io), so skills written for other agents mostly just work. The trick is <b>progressive disclosure</b>: pi never puts full skill bodies in context — only names + descriptions — and the agent pulls a body in when the task matches.</p>
+
+<div class="fig"><div class="cap">FIG 7 · why skills are cheap to have many of</div>
+<div class="vflow">
+  <div class="n c-core center"><b>startup scan</b><span class="s">all skill sources → extract <code>name</code> + <code>description</code> only (validation warnings tolerated, e.g. bad name/description length; duplicates: first wins; <code>disable-model-invocation: true</code> hides from prompt)</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core center"><b>system prompt gets a compact XML index</b><span class="s">
+<code>&lt;name&gt;</code> + <code>&lt;description&gt;</code> per skill — maybe 2 lines each, not the whole manual</span></div>
+  <div class="a-d">▼<span>task matches a description → agent reads SKILL.md (via <code>read</code>, or <code>bash</code>) — or you force it</span></div>
+  <div class="n c-skill center"><b>body loaded on demand</b><span class="s">full instructions + relative paths to <code>scripts/</code>, <code>references/</code>, <code>assets/</code> — resolved from the skill dir</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok center"><b>agent executes the workflow</b><span class="s"><code>/skill:name args</code> also works — args are appended to the content as <code>User: &lt;args&gt;</code> (requires <code>enableSkillCommands</code>, default on)</span></div>
+</div>
+</div>
+
+<h3>Anatomy &amp; rules</h3>
+<div class="duo">
+<div><pre class="code">my-skill/
+├── SKILL.md          ← required
+├── scripts/          ← helper scripts
+├── references/       ← deep docs, read on demand
+└── assets/</pre>
+<pre class="code">---
+name: pdf-tools
+description: Extract text/tables from PDFs. Use when…
+---
+# usage instructions follow…</pre>
+</div>
+<div>
+<ul><li><code>name</code> (required): lowercase a-z/0-9/hyphens, ≤64 chars. Pi is lenient: it doesn’t require name = folder name (the standard does, but that breaks shared skill dirs).</li>
+<li><code>description</code> (required): ≤1024 chars, drives when the model loads the skill — be specific.</li>
+<li>Optional: <code>license</code>, <code>compatibility</code>, <code>metadata</code>, <code>allowed-tools</code>, <code>disable-model-invocation</code>.</li>
+<li>Malformed/description-less skills warn &amp; skip; unknown fields ignored; root md that isn’t a skill is silently ignored.</li>
+<li>Reuse other harnesses’ skills: <code>"skills": ["~/.claude/skills", "~/.codex/skills"]</code> in settings.</li>
+</ul></div>
+</div>
+<p class="small muted">Sources recap (sec 4): global <code>~/.pi/agent/skills/</code> + <code>~/.agents/skills/</code>; project <code>.pi/skills/</code> + <code>.agents/skills/</code> up to git root (trusted); packages; settings array; <code>--skill</code> (loads even with <code>--no-skills</code>).</p>
+</section>
+
+<section id="s7">
+<h2><span class="secnum">7</span>Themes <span class="tag">colors of the TUI</span></h2>
+<p class="lede">A theme is one JSON file mapping <b>53 named semantic tokens</b> to colors. Tokens are semantic — <code>accent</code>, <code>userMessageBg</code>, <code>toolErrorBg</code>, <code>syntaxString</code>… — so re-theming never touches pi’s layout code. Values can be hex, xterm-256 index, a reference to a <code>vars</code> entry, or <code>""</code> for the terminal default.</p>
+
+<div class="fig"><div class="cap">FIG 8 · from file to pixels</div>
+<div class="vflow">
+  <div class="n c-theme center"><b>theme source file</b><span class="s">
+<code>name</code> (unique, no <code>/</code>) · optional <code>vars</code> (reusable palette) · <code>colors</code> (53 required tokens) · optional <code>export</code> block for <code>/export</code> HTML colors</span></div>
+  <div class="a-d">▼<span>selected via <code>theme</code> setting, <code>/settings</code>, or <code>--use-theme light|name</code> (run-scoped; <code>light/dark</code> follows the terminal)</span></div>
+  <div class="n c-theme center"><b>token resolution</b><span class="s">value → color: hex #rgb · 256-idx · variable lookup into <code>vars</code> (may chain) · <code>""</code> default. Optional tokens fall back: <code>thinkingMax</code>→<code>thinkingXhigh</code>, <code>searchMatchBg</code>→<code>selectedBg</code>, <code>searchMatchText</code>→<code>text</code></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-core center"><b>terminal capability check</b><span class="s">truecolor (<code>$COLORTERM</code>=truecolor/24bit) → exact 24-bit RGB · else nearest 256-color approximation</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok center"><b>TUI painted</b><span class="s">editing the active custom theme file hot-reloads instantly — tune until it feels right</span></div>
+</div>
+</div>
+
+<h3>The 53 tokens by group</h3>
+<div class="fork3">
+<div class="n c-theme"><b>Core UI (13)</b><span class="s"><code>accent</code> <code>border</code> <code>borderAccent</code> <code>borderMuted</code> <code>success</code> <code>error</code> <code>warning</code> <code>muted</code> <code>dim</code> <code>text</code> <code>thinkingText</code> <code>scrollbarTrack</code> <code>scrollbarThumb</code></span></div>
+<div class="n c-theme"><b>Backgrounds &amp; content (11 + 2 opt)</b><span class="s"><code>selectedBg</code> <code>userMessageBg/Text</code> <code>customMessageBg/Text/Label</code> <code>toolPendingBg</code> <code>toolSuccessBg</code> <code>toolErrorBg</code> <code>toolTitle</code> <code>toolOutput</code> + opt <code>searchMatchBg/Text</code></span></div>
+<div class="n c-theme"><b>Markdown (10)</b><span class="s"><code>mdHeading</code> <code>mdLink</code> <code>mdLinkUrl</code> <code>mdCode</code> <code>mdCodeBlock</code> <code>mdCodeBlockBorder</code> <code>mdQuote</code> <code>mdQuoteBorder</code> <code>mdHr</code> <code>mdListBullet</code></span></div>
+<div class="n c-theme"><b>Tool diffs (3)</b><span class="s"><code>toolDiffAdded</code> <code>toolDiffRemoved</code> <code>toolDiffContext</code></span></div>
+<div class="n c-theme"><b>Syntax (9)</b><span class="s"><code>syntaxComment</code> <code>syntaxKeyword</code> <code>syntaxFunction</code> <code>syntaxVariable</code> <code>syntaxString</code> <code>syntaxNumber</code> <code>syntaxType</code> <code>syntaxOperator</code> <code>syntaxPunctuation</code></span></div>
+<div class="n c-theme"><b>Thinking levels (6 + 1 opt)</b><span class="s"><code>thinkingOff</code> <code>thinkingMinimal</code> <code>thinkingLow</code> <code>thinkingMedium</code> <code>thinkingHigh</code> <code>thinkingXhigh</code> + opt <code>thinkingMax</code> — editor border shows the level</span></div>
+</div>
+<div class="box info" style="margin-top:10px"><b class="h">Two more corners</b>
+<ul><li><code>bashMode</code> (1 token): editor border in <code>!</code> bash mode.</li>
+<li><code>export</code>: optional <code>{pageBg, cardBg, infoBg}</code> for <code>/export</code> HTML; omitted → derived from <code>userMessageBg</code>.</li>
+<li>The <code>$schema</code> URL in the file gives editor autocomplete/validation. First run auto-detects terminal background → <code>dark</code> or <code>light</code>.</li></ul></div>
+</section>
+
+<section id="s8">
+<h2><span class="secnum">8</span>Extensions — TypeScript modules on the core <span class="tag">full power</span></h2>
+<p class="lede">An extension is a <b>default-exported factory function</b> that receives the <code>ExtensionAPI</code>. Pi imports it with jiti (TS runs with no build step) and calls it at startup — whatever the factory registers becomes part of the run. This is the escape hatch: events, custom tools the model can call, commands, UI, providers, custom rendering.</p>
+
+<div class="fig"><div class="cap">FIG 9 · an extension’s place in the run</div>
+<div class="vflow">
+  <div class="n c-core center"><b>startup</b><span class="s">extension file discovered (sec 4) → jiti-imported → default factory called with <code>pi</code> — async factories are awaited before <code>session_start</code> / <code>resources_discover</code> / provider flush</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext wide"><b>factory registers capabilities</b><span class="s">event handlers · tools · commands · shortcuts · flags · providers · message/entry renderers · markdown transformers · UI (dialogs, widgets, custom components) · session entries</span></div>
+  <div class="a-d">▼<span>then, for the whole session…</span></div>
+  <div class="n c-ext wide"><b>handlers fire on the lifecycle (FIG 10 below)</b><span class="s">the model can call your <code>registerTool</code> tools; <code>ctx.ui</code> lets you prompt the user (confirm/select/input/notify/setStatus/setWidget); state can survive restarts via <code>pi.appendEntry</code> session entries</span></div>
+</div>
+</div>
+
+<div class="box ok"><b class="h">What a minimal extension looks like</b>
+<pre class="code" style="margin:6px 0 0">import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
+
+export default function (pi: ExtensionAPI) {
+  pi.on("tool_call", async (ev, ctx) => {           // intercept: block a tool
+    if (ev.toolName === "bash" &amp;&amp; ev.input.command?.includes("rm -rf")) {
+      const ok = await ctx.ui.confirm("Dangerous!", "Allow rm -rf?");
+      if (!ok) return { block: true, reason: "Blocked by user" };
+    }
+  });
+  pi.registerTool({                                  // new tool the model can call
+    name: "greet", description: "Greet someone",
+    parameters: Type.Object({ name: Type.String() }),
+    async execute(_id, params) { return { content: [{ type: "text", text: `Hello ${params.name}!` }], details: {} }; },
+  });
+  pi.registerCommand("hello", {                      // /hello
+    description: "Say hello",
+    handler: async (_args, ctx) =&gt; ctx.ui.notify("Hello!", "info"),
+  });
+}</pre>
+Test one-off with <code>pi -e ./my-ext.ts</code> (no install needed).</div>
+
+<h3>Lifecycle — the events you can hook</h3>
+<p>This is pi’s inner loop exposed as events. Each box is <code>pi.on("name", handler)</code>; handlers can often modify the flow (intercept input, block tools, inject messages, cancel compaction…).</p>
+<div class="fig"><div class="cap">FIG 10 · the extension event lifecycle (one full session)</div>
+<div class="vflow">
+  <div class="stage">— boot —</div>
+  <div class="n c-ext"><b>project_trust</b><span class="s">global/CLI extensions may answer the trust question before project resources load — <code>{ trusted: "yes"|"no"|"undecided" }</code></span></div>
+  <div class="n c-ext"><b>session_start</b> <span class="s">reason: <code>startup|reload|new|resume|fork</code></span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ext"><b>resources_discover</b><span class="s">return extra <code>skillPaths</code>/<code>promptPaths</code>/<code>themePaths</code></span></div>
+  <div class="a-d">▼<span>per user message…</span></div>
+  <div class="stage">— each prompt —</div>
+  <div class="n c-core"><b>user sends a prompt</b></div>
+  <div class="a-d">▼</div>
+  <div class="nest">
+    <div class="n c-ext"><b>input</b> <span class="s">can intercept / transform / handle — else commands checked first, then skill/template expansion</span></div>
+    <div class="n c-ext"><b>before_agent_start</b> <span class="s">inject a message, modify the system prompt</span></div>
+    <div class="n c-ext"><b>agent_start → message_start → message_update → message_end</b> <span class="s">message streaming begins</span></div>
+    <div class="n c-warn"><b>turn loop — repeats while the LLM calls tools:</b></div>
+    <div class="a-d">▼</div>
+    <div class="nest">
+      <div class="n c-ext"><b>turn_start → context</b> <span class="s">modify the messages that go out</span></div>
+      <div class="n c-ext"><b>before_provider_headers → before_provider_request → after_provider_response</b> <span class="s">mutate headers, inspect/replace the request payload, see status before the stream is consumed</span></div>
+      <div class="n c-core"><b>LLM responds — may call tools:</b></div>
+      <div class="a-d">▼<span>each tool call</span></div>
+      <div class="nest">
+        <div class="n c-ext"><b>tool_execution_start → tool_call → tool_execution_update → tool_result → tool_execution_end</b> <span class="s">tool_call can <b>block</b>; tool_result can <b>modify</b></span></div>
+      </div>
+      <div class="n c-ext"><b>turn_end</b></div>
+    </div>
+    <div class="n c-ext"><b>agent_end → agent_settled</b> <span class="s">no retries/compaction/follow-ups left</span></div>
+  </div>
+  <div class="a-d">▼</div>
+  <div class="stage">— session operations —</div>
+  <div class="fork">
+    <div class="n c-ext"><b>/new or /resume</b><span class="s">session_before_switch (cancelable) → session_shutdown → session_start → resources_discover</span></div>
+    <div class="n c-ext"><b>/fork or /clone</b><span class="s">session_before_fork → session_shutdown → session_start{reason:"fork"} → resources_discover</span></div>
+  </div>
+  <div class="n c-ext"><b>/compact or auto-compaction</b><span class="s">session_before_compact (cancel/customize) → session_compact | session_compact_failed</span></div>
+  <div class="n c-ext"><b>/tree nav · /name · /model / thinking change</b><span class="s">session_before_tree → session_tree · session_info_changed · (thinking_level_select) → model_select</span></div>
+  <div class="stage">— exit (Ctrl+C/D, SIGHUP/SIGTERM) —</div>
+  <div class="n c-ext"><b>session_shutdown</b></div>
+</div>
+</div>
+
+<div class="box warn"><b class="h">Placing extensions &amp; reload</b>
+Put them in <code>~/.pi/agent/extensions/</code> or <code>.pi/extensions/</code> for auto-discovery — those hot-reload with <code>/reload</code>. <code>pi -e ./path.ts</code> is for quick tests only. Extensions run with full system permissions; npm deps resolve from a <code>package.json</code> beside the file, or from package <code>dependencies</code> for installed packages.</div>
+</section>
+<section id="s9">
+<h2><span class="secnum">9</span>Pi packages <span class="tag">share &amp; install</span></h2>
+<p class="lede">A pi package is any npm/git/local bundle that ships extensions, skills, prompts or themes — declared via a <code>pi</code> key in <code>package.json</code> or via convention directories. <code>pi install</code> downloads it and records it in settings; at the next startup pi installs anything missing. This is how you share a setup or pull in the ecosystem (the <code>pi-package</code> keyword powers the gallery at pi.dev/packages).</p>
+
+<div class="fig"><div class="cap">FIG 11 · install → record → auto-load loop</div>
+<div class="vflow">
+  <div class="fork">
+    <div class="n c-pkg"><b>npm</b><span class="s"><code>npm:pkg@1.2.3</code> → <code>~/.pi/agent/npm/</code> or <code>.pi/npm/</code> (+<code>npm install</code> deps)</span></div>
+    <div class="n c-pkg"><b>git</b><span class="s"><code>git:github.com/user/repo@v1</code> or URL → cloned to <code>~/.pi/agent/git/&lt;host&gt;/&lt;path&gt;</code> / <code>.pi/git/…</code>; refs pinned; SSH keys honored</span></div>
+    <div class="n c-pkg"><b>local path</b><span class="s">file → single extension; dir → package rules. Added to settings, <b>not copied</b>; relative → resolved against the settings file</span></div>
+  </div>
+  <div class="a-d">▼<span><code>pi install &lt;src&gt;</code> (or <code>-e</code> = temporary for this run only)</span></div>
+  <div class="n c-settings center"><b>recorded in settings</b><span class="s">default → global <code>settings.json</code> <code>packages</code> array · <code>-l</code> → project <code>.pi/settings.json</code> (team-shareable)</span></div>
+  <div class="a-d">▼<span>next startup (after trust, if project-scoped)</span></div>
+  <div class="n c-ok center"><b>missing packages auto-installed</b><span class="s">then resources filtered &amp; loaded (sec 4); <code>pi remove</code> / <code>pi list</code> manage; <code>pi config</code> enables/disables individual resources</span></div>
+</div>
+</div>
+
+<h3>Anatomy</h3>
+<div class="duo">
+<div><pre class="code">{
+  "name": "my-package",
+  "keywords": ["pi-package"],       // gallery discovery
+  "pi": {
+    "extensions": ["./extensions"],
+    "skills":     ["./skills"],
+    "prompts":    ["./prompts"],
+    "themes":     ["./themes"]
+  }
+}</pre>
+<p class="small muted">No <code>pi</code> manifest? Convention dirs auto-discover: <code>extensions/</code> (.ts/.js), <code>skills/</code> (SKILL.md folders, recursive), <code>prompts/</code> (.md), <code>themes/</code> (.json).</p>
+</div>
+<div>
+<h3>Rules that bite</h3>
+<ul><li><b>Deps:</b> runtime deps in <code>dependencies</code> (installed with <code>--omit=dev</code>). Core packages (<code>@earendil-works/pi-*</code>, <code>typebox</code>) go in <code>peerDependencies</code> — don’t bundle them. Other pi packages must be bundled (<code>bundledDependencies</code>).</li>
+<li><b>Filtering:</b> object form in settings — <code>{"source": "npm:pkg", "skills": ["a"], "extensions": []}</code> narrows what loads per type.</li>
+<li><b>Scope &amp; dedupe:</b> same package in global + project → project wins unless <code>autoload:false</code>, then project is a delta over global. Identity: npm name / git URL-without-ref / resolved absolute path.</li>
+<li><b>Update:</b> pinned npm/git refs are skipped by <code>pi update --extensions|--all</code>, but git clones are reconciled to their pinned ref (reset+clean+install).</li>
+</ul></div></div>
+</section>
+
+<section id="s10">
+<h2><span class="secnum">10</span>Keybindings <span class="tag">keybindings.json</span></h2>
+<p class="lede">Every shortcut is an action with an <b>internal namespaced id</b> (e.g. <code>tui.editor.deleteWordBackward</code>, <code>app.model.cycleForward</code>) and one or more default keys. You rebind by id in <code>~/.pi/agent/keybindings.json</code>; user bindings replace defaults for that action. That’s the entire mechanism — ids, not key names, are the API (extension authors use the same ids).</p>
+
+<div class="fig"><div class="cap">FIG 12 · key → action resolution</div>
+<div class="vflow">
+  <div class="n c-core center"><b>keystroke arrives</b><span class="s">terminal reports key (+ modifiers: ctrl/shift/alt/super)</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-kb center"><b>lookup: which id binds this combo?</b><span class="s">1 · your <code>keybindings.json</code> overrides (single key or array) → 2 · defaults. Legacy pre-namespaced ids auto-migrate at startup</span></div>
+  <div class="a-d">▼</div>
+  <div class="n c-ok center"><b>action runs</b><span class="s">edit / <code>/reload</code> after changing the file — no restart needed</span></div>
+</div>
+</div>
+
+<h3>Format</h3>
+<pre class="code">{
+  "tui.editor.historyPrevious": "ctrl+p",              // one key
+  "tui.editor.historyNext": ["ctrl+n", "ctrl+j"],      // or several
+  "tui.editor.deleteWordBackward": ["ctrl+w", "alt+backspace"]
+}</pre>
+<p>Keys: letters, digits, <kbd>f1</kbd>–<kbd>f12</kbd>, specials (<code>escape, enter, tab, space, backspace, delete, home, end, pageUp, pageDown, up…</code>), symbols. Modifiers combine: <code>ctrl+shift+alt+x</code>. <b>super</b> needs a terminal that reports it separately (Kitty keyboard protocol) — most won’t.</p>
+
+<details class="call"><summary>Action groups &amp; the defaults you’ll most likely rebind (full list: docs/keybindings.md)</summary><div class="body">
+<div class="twrap"><table class="tbl">
+<tr><th>Group</th><th>id → default</th></tr>
+<tr><td><b>Cursor</b></td><td><code>tui.editor.cursorUp</code> <kbd>up</kbd> · <code>cursorDown</code> <kbd>down</kbd> · <code>cursorLeft</code> <kbd>←</kbd> <kbd>ctrl+b</kbd> · <code>cursorRight</code> <kbd>→</kbd> <kbd>ctrl+f</kbd> · <code>cursorWordLeft</code> <kbd>alt+←</kbd> <kbd>ctrl+←</kbd> <kbd>alt+b</kbd> · <code>cursorWordRight</code> <kbd>alt+→</kbd> <kbd>alt+f</kbd> · <code>cursorLineStart</code> <kbd>home</kbd> <kbd>ctrl+a</kbd> · <code>cursorLineEnd</code> <kbd>end</kbd> <kbd>ctrl+e</kbd> · <code>pageUp/pageDown</code></td></tr>
+<tr><td><b>History</b></td><td><code>tui.editor.historyPrevious</code> / <code>historyNext</code> — unbound by default; explicit history bindings beat app actions in the editor</td></tr>
+<tr><td><b>Delete</b></td><td><code>deleteCharBackward</code> <kbd>backspace</kbd> · <code>deleteCharForward</code> <kbd>delete</kbd> <kbd>ctrl+d</kbd> · <code>deleteWordBackward</code> <kbd>ctrl+w</kbd> <kbd>alt+backspace</kbd> · <code>deleteWordForward</code> <kbd>alt+d</kbd> · <code>deleteToLineStart</code> <kbd>ctrl+u</kbd> · <code>deleteToLineEnd</code> <kbd>ctrl+k</kbd></td></tr>
+<tr><td><b>Input</b></td><td><code>tui.input.newLine</code> <kbd>shift+enter</kbd> <kbd>ctrl+j</kbd> · <code>submit</code> <kbd>enter</kbd> · <code>tab</code> <kbd>tab</kbd> · <code>copy</code> <kbd>ctrl+c</kbd> · kill-ring: <code>yank</code> <kbd>ctrl+y</kbd> · <code>undo</code> <kbd>ctrl+-</kbd> (Win <kbd>ctrl+z</kbd>)</td></tr>
+<tr><td><b>Tree / sessions</b></td><td><code>app.tree.*</code> fold/unfold <kbd>ctrl+←</kbd> <kbd>ctrl+→</kbd>, label <kbd>shift+l</kbd>, filters <kbd>ctrl+d/t/u/l/a</kbd> … · <code>app.session.*</code> resume picker, togglePath <kbd>ctrl+p</kbd>, rename <kbd>ctrl+r</kbd>, delete <kbd>ctrl+d</kbd></td></tr>
+<tr><td><b>Model / thinking</b></td><td><code>app.model.select</code> <kbd>ctrl+l</kbd> · <code>cycleForward</code> <kbd>ctrl+p</kbd> · <code>cycleBackward</code> <kbd>shift+ctrl+p</kbd> (Win/WSL <kbd>alt+p</kbd>) · <code>app.thinking.cycle</code> <kbd>shift+tab</kbd> · <code>app.thinking.toggle</code> <kbd>ctrl+t</kbd> · save-default = <kbd>ctrl+s</kbd> in <code>/model</code>/<code>/thinking</code></td></tr>
+<tr><td><b>Display / queue</b></td><td><code>app.tools.expand</code> <kbd>ctrl+o</kbd> · <code>app.message.copy</code> <kbd>ctrl+x</kbd> · <code>followUp</code> <kbd>alt+enter</kbd> (Win/WSL <kbd>ctrl+q</kbd>) · <code>dequeue</code> <kbd>alt+up</kbd></td></tr>
+<tr><td><b>Fullscreen</b></td><td>in <code>--tui-mode fullscreen</code>, <code>tui.altScreen.*</code> (pageUp/Down, halfPage, line…) control the transcript and take precedence over editor bindings for unmodified keys; <code>[]</code> disables one</td></tr>
+</table></div>
+<p class="small muted">Pattern examples ship in the docs — emacs-style (<code>ctrl+p/n/b/f</code>…) and vim-style (<code>alt+h/j/k/l</code>…) presets.</p></div></details>
+</section>
+
+<section id="s11">
+<h2><span class="secnum">11</span>Custom models &amp; providers <span class="tag">models.json + extensions</span></h2>
+<p class="lede">Three ways to steer what pi talks to: (1) <b>choose/save</b> among known models, (2) <b>declare</b> local or proxied providers that speak a supported API (Ollama, vLLM, LM Studio, any OpenAI/Anthropic-compatible endpoint) in <code>models.json</code>, (3) <b>implement</b> genuinely new providers or OAuth flows as extensions. Credentials resolve CLI → auth → env → config.</p>
+
+<div class="fig"><div class="cap">FIG 13 · choosing vs declaring vs implementing</div>
+<div class="vflow">
+  <div class="fork3">
+    <div class="n c-settings tall"><b>choose &amp; save</b><span class="s">settings: <code>defaultProvider</code>/<code>defaultModel</code>/<code>defaultThinkingLevel</code> (saved from <code>/model</code> &amp; <code>/thinking</code> with <kbd>Ctrl</kbd>+<kbd>S</kbd>) · <code>enabledModels</code> globs narrow <kbd>Ctrl</kbd>+<kbd>P</kbd> cycling · <code>modelThinkingLevels</code> per model</span></div>
+    <div class="n c-model tall"><b>declare in models.json</b><span class="s"><code>~/.pi/agent/models.json</code>: <code>providers</code> object — <code>baseUrl</code> + <code>api</code> (e.g. <code>openai-completions</code>) + <code>apiKey</code> + <code>models[]</code> (only <code>id</code> required) + <code>compat</code> flags</span></div>
+    <div class="n c-ext tall"><b>implement as extension</b><span class="s"><code>pi.registerProvider(name, {…})</code> — custom APIs, OAuth flows, live model discovery via async factory (see docs/custom-provider.md)</span></div>
+  </div>
+  <div class="a-d">▼<span>then credentials are resolved per provider…</span></div>
+  <div class="n c-model center"><b>resolution order</b><span class="s">1 <code>--api-key</code> CLI → 2 <code>auth.json</code> entry (from <code>/login</code>) → 3 environment variable (e.g. <code>ANTHROPIC_API_KEY</code>) → 4 custom-provider keys from models.json</span></div>
+</div>
+</div>
+
+<div class="duo">
+<div><h3>Minimal local provider (models.json)</h3>
+<pre class="code">{
+  "providers": {
+    "ollama": {
+      "baseUrl": "http://localhost:11434/v1",
+      "api": "openai-completions",
+      "apiKey": "ollama",          // dummy — Ollama ignores it
+      "models": [
+        { "id": "llama3.1:8b" },
+        { "id": "qwen2.5-coder:7b", "reasoning": true }
+      ]
+    }
+  }
+}</pre>
+</div>
+<div><h3>Full model entry options</h3>
+<p>Per model: <code>id</code> (required) · <code>name</code> · <code>reasoning</code> · <code>input</code> modalities · <code>contextWindow</code> · <code>maxTokens</code> · <code>cost {input,output,cacheRead,cacheWrite}</code>.</p>
+<p>Provider level: <code>api</code> in {OpenAI Completions, OpenAI Responses, Anthropic Messages, Google Generative AI} · <code>compat</code>: e.g. <code>supportsDeveloperRole:false</code>, <code>supportsReasoningEffort:false</code> for servers that choke on them (Ollama/vLLM/SGLang) · custom headers via shell commands.</p>
+<p class="small muted">Missing <code>apiKey</code> hides models from <code>/model</code> until you save one with <code>/login</code> or pass <code>--api-key</code> — that’s why local servers get a dummy value.</p></div>
+</div>
+</section>
+
+<section id="s12">
+<h2><span class="secnum">12</span>Environment variables <span class="tag">3 roles</span></h2>
+<p class="lede">Env vars play three distinct roles. Mixing them up is the most common source of “why isn’t my var visible?” confusion: process config vars are read <i>by pi at startup</i>; session vars are injected <i>into shell tool commands</i>; markers identify <i>pi as the parent</i>.</p>
+
+<div class="fig"><div class="cap">FIG 14 · the three roles</div>
+<div class="vflow">
+  <div class="fork3">
+    <div class="n c-env tall"><b>① process config</b><span class="s">read by pi itself at startup: <code>PI_CODING_AGENT_DIR</code> (config dir override) · <code>PI_CODING_AGENT_SESSION_DIR</code> · <code>PI_PACKAGE_DIR</code> · <code>PI_OFFLINE</code> · <code>PI_SKIP_VERSION_CHECK</code> · <code>PI_TELEMETRY</code> · <code>PI_CACHE_RETENTION=long</code> · terminal overrides (<code>PI_HYPERLINKS</code>, <code>PI_IMAGE_PROTOCOL</code>, <code>PI_TRUE_COLOR</code>, <code>PI_TUI_ESC_TIMEOUT</code>, <code>PI_HARDWARE_CURSOR</code>) · <code>VISUAL</code>/<code>EDITOR</code> · <code>HTTP(S)_PROXY</code></span></div>
+    <div class="n c-env tall"><b>② session env → shell tools</b><span class="s">every <code>bash</code>/<code>powershell</code> tool command starts with: <code>PI_SESSION_ID</code> · <code>PI_SESSION_FILE</code> · <code>PI_PROVIDER</code> · <code>PI_MODEL</code> · <code>PI_REASONING_LEVEL</code> — resolved fresh per command. NOT injected into user <code>!</code>/<code>!!</code> commands</span></div>
+    <div class="n c-env tall"><b>③ process markers</b><span class="s">set on pi’s own process, inherited by children: <code>AI_AGENT=pi</code> (generic) · <code>PI_CODING_AGENT=true</code> (pi-specific). Tooling uses these to detect they run inside pi</span></div>
+  </div>
+</div>
+</div>
+<div class="box ok"><b class="h">Practical notes</b>
+<ul><li>Ask “which model am I?” in a shell: <code>printf '%s/%s %s' "$PI_PROVIDER" "$PI_MODEL" "$PI_REASONING_LEVEL"</code> — not from the system prompt.</li>
+<li>Custom tools made with <code>createBashTool()</code>/<code>createPowerShellTool()</code> expose session env by default; opt out with <code>exposeSessionEnvironment:false</code> (also strips inherited stale values).</li>
+<li>Provider API keys (<code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, cloud creds…) are documented in docs/providers.md, not here.</li>
+<li><code>PI_OFFLINE=1</code> or <code>--offline</code> kills all startup network ops (update checks, package checks, telemetry).</li></ul></div>
+</section>
+<section id="s13">
+<h2><span class="secnum">13</span>Cheat sheets &amp; reference <span class="tag">lookup</span></h2>
+
+<h3>“I want to…” → where it goes</h3>
+<div class="twrap"><table class="tbl">
+<tr><th style="width:42%">Goal</th><th>Action</th></tr>
+<tr><td>Change the default model for everything</td><td><code>/model</code> → <kbd>Ctrl</kbd>+<kbd>S</kbd>, or <code>defaultProvider</code>/<code>defaultModel</code> in <code>~/.pi/agent/settings.json</code></td></tr>
+<tr><td>Different model in one project only</td><td><code>defaultModel</code> in <code>.pi/settings.json</code></td></tr>
+<tr><td>Use a local model (Ollama etc.)</td><td>add provider to <code>~/.pi/agent/models.json</code> (sec 11)</td></tr>
+<tr><td>Recolor pi</td><td>theme JSON → <code>~/.pi/agent/themes/</code> or <code>.pi/themes/</code>, select via <code>/settings</code> (sec 7)</td></tr>
+<tr><td>Remap a key</td><td><code>~/.pi/agent/keybindings.json</code> + <code>/reload</code> (sec 10)</td></tr>
+<tr><td>Add a reusable prompt</td><td><code>~/.pi/agent/prompts/review.md</code> → use <code>/review</code> (sec 5)</td></tr>
+<tr><td>Reuse Claude/Codex skills</td><td><code>"skills": ["~/.claude/skills", "~/.codex/skills"]</code> (sec 6)</td></tr>
+<tr><td>Guard <code>rm -rf</code> / block writes to <code>.env</code></td><td>extension with <code>tool_call</code> handler (sec 8)</td></tr>
+<tr><td>Let the model query your API</td><td>extension <code>pi.registerTool()</code></td></tr>
+<tr><td>Add a slash command with logic</td><td>extension <code>pi.registerCommand()</code></td></tr>
+<tr><td>Share your extension+skills+theme as a bundle</td><td>make a pi package, <code>pi install npm:…|git:…</code> (sec 9)</td></tr>
+<tr><td>Team shares one project config</td><td>commit <code>.pi/settings.json</code> (with <code>packages</code>) — teammates get a trust prompt then auto-install</td></tr>
+<tr><td>Try a package without installing</td><td><code>pi -e npm:@foo/bar</code> (sec 9)</td></tr>
+<tr><td>Disable a resource type entirely</td><td><code>--no-skills</code> <code>--no-themes</code> <code>--no-prompt-templates</code> (explicit paths still load)</td></tr>
+<tr><td>Sandbox one file of tools</td><td><code>--tools read,bash</code> (strict allowlist) / <code>--exclude-tools</code> / <code>--no-builtin-tools</code> (sec 2)</td></tr>
+<tr><td>Skip network at startup</td><td><code>--offline</code> or <code>PI_OFFLINE=1</code> (sec 12)</td></tr>
+<tr><td>Save a trust decision for a folder</td><td><code>/trust</code> in that folder (sec 3)</td></tr>
+<tr><td>Reload extensions after editing</td><td><code>/reload</code> — keep extensions in auto-discovery dirs</td></tr>
+</table></div>
+
+<h3>Customization CLI flags at a glance</h3>
+<div class="twrap"><table class="tbl">
+<tr><th>Flag</th><th>Meaning</th></tr>
+<tr><td><code>-e, --extension &lt;path&gt;</code></td><td>load one extension (also: temporarily install a package for this run)</td></tr>
+<tr><td><code>--skill &lt;path&gt;</code> · <code>--prompt-template &lt;path&gt;</code> · <code>--theme &lt;path&gt;</code></td><td>explicit resource; survives its <code>--no-*</code> kill-switch</td></tr>
+<tr><td><code>--use-theme &lt;name&gt;</code></td><td>theme for this run only (<code>light/dark</code> follows terminal)</td></tr>
+<tr><td><code>--no-skills|--no-themes|--no-prompt-templates</code></td><td>disable auto-discovery of that type</td></tr>
+<tr><td><code>--tools &lt;list&gt;</code> · <code>--no-tools</code> · <code>--no-builtin-tools</code> · <code>--exclude-tools &lt;list&gt;</code></td><td>strict tool allowlist / disable all / drop built-ins / filter (sec 2)</td></tr>
+<tr><td><code>-a, --approve</code> / <code>-na, --no-approve</code></td><td>trust / don’t trust project for this run (non-interactive)</td></tr>
+<tr><td><code>--session-dir &lt;dir&gt;</code></td><td>session storage override (top of precedence chain)</td></tr>
+<tr><td><code>-m, --model</code> · <code>--provider</code> · <code>--api-key</code> · <code>--thinking</code></td><td>run-scoped model/provider/auth/thinking</td></tr>
+<tr><td><code>--list-models</code></td><td>list models incl. ones an extension registered</td></tr>
+<tr><td><code>pi install/remove/list/update/config</code></td><td>package management (sec 9); <code>config</code> toggles resources, Tab switches global/project scope</td></tr>
+</table></div>
+
+<h3>Runtime commands that shape config</h3>
+<p><span class="pill">/settings</span><span class="pill">/model</span><span class="pill">/thinking</span><span class="pill">/scoped-models</span><span class="pill">/trust</span><span class="pill">/reload</span><span class="pill">/login</span><span class="pill">/llama</span><span class="pill">/tree</span><span class="pill">/compact</span><span class="pill">/new</span><span class="pill">/resume</span><span class="pill">/fork</span><span class="pill">/name</span><span class="pill">/export</span><span class="pill">/share</span></p>
+
+<h3>Where to go deeper</h3>
+<ul>
+<li>Official docs: <code>…/node_modules/@earendil-works/pi-coding-agent/docs/</code> — <code>settings.md</code> · <code>themes.md</code> · <code>skills.md</code> · <code>prompt-templates.md</code> · <code>packages.md</code> · <code>keybindings.md</code> · <code>extensions.md</code> · <code>models.md</code> · <code>custom-provider.md</code> · <code>providers.md</code> · <code>environment-variables.md</code> · <code>sessions.md</code> · <code>session-format.md</code> · <code>compaction.md</code></li>
+<li>Working extension examples: <code>docs/../examples/extensions/</code> (permission gates, git checkpointing, summarize.ts, snake.ts, custom-provider-gitlab-duo…).</li>
+<li>Skills ecosystem: <a href="https://agentskills.io">agentskills.io</a> (spec) · anthropics/skills · badlogic/pi-skills.</li>
+</ul>
+
+<h3>Mental-model recap (30 seconds)</h3>
+<div class="box info"><b class="h">How customization actually works</b>
+<ol>
+<li>pi starts → asks/checks <b>trust</b> (sec 3) → merges <b>settings</b> global-then-project (sec 2).</li>
+<li>It then <b>discovers resources</b> from dirs + packages + settings + flags (sec 4) — <b>extensions run</b>, <b>skills are indexed</b>, <b>prompts</b> wait for <code>/</code>, <b>themes</b> paint.</li>
+<li>During the conversation the extensions <b>listen to events</b> (sec 8, FIG 10), skills load <b>on demand</b> when the task matches (sec 6), and <code>/name</code> expands templates into text (sec 5).</li>
+<li>Everything project-scoped stays behind the trust gate; <b>remove trust</b> and a folder reverts to global-only.</li>
+</ol></div>
+</section>
+
+<p class="small dim center" style="margin-top:44px">…</p>
+</main>
+<footer style="max-width:1180px;margin:0 auto;padding:18px 22px 40px">
+  Compiled from the pi documentation (docs/settings.md, themes.md, skills.md, prompt-templates.md, packages.md, keybindings.md, extensions.md, models.md, providers.md, environment-variables.md). If pi and this guide ever disagree, pi wins.
+</footer>
+</body>
+</html>
