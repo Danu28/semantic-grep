@@ -515,6 +515,8 @@ export default function (pi: ExtensionAPI) {
     return {
       systemPrompt: `SEMANTIC_SEARCH — neural, local 384-dim code search. Returns file:line+score.
 
+SCOPE: Current workspace (cwd) only — indexes current repo (~500 files / 5k blocks, gitignore-aware). No cross-repo. Use filterPath to narrow within cwd.
+
 RULE: MUST call semantic_search BEFORE bash grep/read for ANY discovery: where is / how does / find / locate / show / search for code.
 
 BATCH: Like bash batches, run 2-3 semantic_search calls in parallel in one turn to save LLM calls (variants), then read top hit.
