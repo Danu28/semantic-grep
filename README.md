@@ -4,9 +4,9 @@
 
 > `semantic_search("auth retry logic")` → `src/payments/stripeRetry.ts:42 (0.89)` even with zero keyword overlap.
 
-- 100% local • offline • private — no API key
-- TypeScript via `jiti` (no build), 384-dim embeddings (Xenova/all-MiniLM-L6-v2 or hash-neural fallback)
-- Branch-safe via `details` snapshot, incremental patch on `write`/`edit`
+- 100% local • offline • private — no API key, **0 vulnerabilities** (`npm audit` clean)
+- **Pure JS** `hash-neural-384` — no download, `<1ms` embed, `384-dim` (`tanh(W·x+b)`), deterministic
+- TypeScript via `jiti` (no build), branch-safe via `details` snapshot, incremental patch on `write`/`edit`
 
 ## Install
 
@@ -48,10 +48,11 @@ First run:
 - `tool_result` on `write`/`edit` → patches vectors for changed file only
 - `details.snapshot` → survives `/fork`/`/resume`/`/reload` without re-embedding
 
-## Neural Engine
+## Neural Engine — Pure `hash-neural-384` (0 vulns)
 
-Primary: `@xenova/transformers` (`all-MiniLM-L6-v2`, 22MB quantized).  
-Fallback: self-contained **hash-neural 384** — hash buckets + tiny MLP (`tanh(W·x+b)`) + residual + L2 norm — deterministic, 0-download, <1ms embed. Same 384-dim cosine interface.
+**Shipped:** self-contained **hash-neural 384** — hash buckets + tiny MLP (`tanh(W·x+b)` + residual + `L2` norm) — deterministic, 0-download, <1ms embed, `384-dim` cosine. No native deps, `npm audit` **0**.
+
+**Opt-in (advanced):** `npm install @xenova/transformers` (`all-MiniLM-L6-v2`, 22MB) + `onnxruntime-node` — `index.ts` auto-detects via `tryXenova()` and uses transformer if present; otherwise `hash-neural`. Opt-in brings `5 vulns` transitive (`protobufjs`/`sharp`) — see Security.
 
 ## Structure
 
@@ -70,18 +71,13 @@ semantic-grep/  (repo root)
 - Tool output <50KB / 2000 lines (pi ceiling).
 - Skips binaries, node_modules, .git, model-cache.
 
-## Security — Safe by Default with hash-neural
+## Security — `hash-neural` = 0 vulns, `pi install` clean
 
-**`npm audit` (extension):**
-- `hash-neural` (pure JS, no native) — `0 vulnerabilities` with `npm install --omit=optional` — this is the **default** path, works offline, <1ms embed.
-- With `--optional` (`@xenova/transformers` + `onnxruntime-node`) — `5 vulns (1 critical protobufjs, 4 high sharp/libvips)` transitive via `onnx-proto → onnxruntime-web`. These require crafted `.proto`/image inputs, not your code chunks, and are **local-only** (no network vector). `npm audit fix --force` downgrades to `1.4.2` (breaking) — **not recommended**.
-- **Hardening:** dependencies are `optional` — `index.ts` tries Xenova, falls back to `hash-neural-384` automatically. `npm audit --omit=optional` proves 0 vulns.
+- **`semantic-grep` pure:** `npm audit` → **`0 vulnerabilities`** — no `protobufjs`/`sharp`/`onnxruntime` because no native deps. Verified `found 0` with `--omit=optional` and full `audit`.
+- **Xenova opt-in:** If you `npm install @xenova/transformers`, you get `5 vulns (1 critical protobufjs, 4 high sharp)` via `onnx-proto → onnxruntime-web` — local-only, needs crafted `.proto`/image, not code chunks. `npm audit fix --force` downgrades to `1.4.2` (breaking) — not recommended.
+- **`pi-brain` dev:** `vitest` moderate + `esbuild` low — dev-only, `esbuild` fix via `npm audit fix` (no breaking, `0.28.x`).
 
-**`npm audit` (pi-brain dev):**
-- `vitest` `moderate` Path Traversal via `@vitest/mocker` — dev-only, needs `vitest@5.0.0` breaking bump. Only affects `vitest` mock server.
-- `esbuild` `low/moderate` file-read on Windows dev server — fix via `npm audit fix` (no breaking, `0.28.x` patch). Neither affects `semantic-grep` runtime.
-
-> **Recommendation:** Ship with `hash-neural` primary (safe), keep Xenova as opt-in. No action needed for `pi install` users — safe by default.
+> **Shipped pure `hash-neural`** — safe by default. Xenova is manual opt-in only.
 
 ## Design
 
