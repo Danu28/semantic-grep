@@ -517,11 +517,14 @@ export default function (pi: ExtensionAPI) {
 
 SCOPE: Current workspace (cwd) only — indexes current repo (~500 files / 5k blocks, gitignore-aware). No cross-repo. Use filterPath to narrow within cwd.
 
-RULE — MANDATORY: For ANY discovery — where is / how does / find / locate / show / search for / explain / what handles — you MUST call semantic_search BEFORE bash grep / bash find / bash rg / bash ls / read. This is not optional. grep = syntactic, semantic_search = semantic (finds synonyms: retry↔backoff↔jitter↔re-queue even with 0 keyword overlap).
+RULE — MANDATORY for code-intent discovery — where is / how does / find / locate / show / search for / explain / what handles CODE LOGIC — you MUST call semantic_search BEFORE bash grep / bash find / bash rg / bash ls / read. This is not optional. grep = syntactic (exact letters), semantic_search = semantic (finds synonyms: retry↔backoff↔jitter↔re-queue even with 0 keyword overlap).
+
+WHEN TO USE semantic_search (MANDATORY): code-intent / feature location (e.g. "where handle payment retry", "auth retry logic", "validate email") — needs meaning, not exact string.
+WHEN NOT TO USE (use bash grep/read instead): literal exact-string / character / emoji counting (e.g. "how many 🔎 exists"), file listings, regex literal audits. For "how many 🔎" the session correctly used grep -ro + node split — that IS correct; semantic_search would not count literally.
 
 BATCH: Like bash batches, run 2-3 semantic_search calls in parallel in one turn (query variants), then read top hit file.
 
-NEVER do this:
+For code-intent, NEVER do this:
 - grep -r "retry"  → ALWAYS semantic_search("retry logic") first
 - grep -rE "retry|backoff|jitter|queue" → semantic_search("payment retry queue with jitter")
 - find . -name "*.ts" | xargs grep -l "auth" → semantic_search("auth retry", filterPath:"src")
