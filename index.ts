@@ -489,10 +489,10 @@ export default function (pi: ExtensionAPI) {
       const res = await buildIndex(cwd, ctx.signal as any).catch(() => null);
       if (ctx.hasUI) ctx.ui.setStatus("semantic-grep", undefined);
       if (ctx.hasUI && res) {
-        ctx.ui.notify(`🧠 Semantic Grep ready: ${res.stats.blocks} blocks from ${res.stats.files} files (${res.took}s) • model: ${res.stats.model}`, "info");
+        ctx.ui.notify(`🔎 Semantic Grep ready: ${res.stats.blocks} blocks from ${res.stats.files} files (${res.took}s) • model: ${res.stats.model}`, "info");
         ctx.ui.setWidget(
           "semantic-grep",
-          [`🧠 Semantic: ${res.stats.blocks} blocks • ${res.stats.files} files • ${res.stats.model.includes("Xenova") ? "neural" : "hash-NN"} • synced just now`],
+          [`🔎 Semantic: ${res.stats.blocks} blocks • ${res.stats.files} files • ${res.stats.model.includes("Xenova") ? "neural" : "hash-NN"} • synced just now`],
           { placement: "belowEditor" } as any
         );
         // durable stats
@@ -503,7 +503,7 @@ export default function (pi: ExtensionAPI) {
     } else if (ctx.hasUI) {
       ctx.ui.setWidget(
         "semantic-grep",
-        [`🧠 Semantic: ${indexStats.blocks} blocks • ${indexStats.files} files • ready`],
+        [`🔎 Semantic: ${indexStats.blocks} blocks • ${indexStats.files} files • ready`],
         { placement: "belowEditor" } as any
       );
     }
@@ -553,7 +553,7 @@ Replaces bash:
     if (ctx.hasUI && lastIndexedAt) {
       const mins = Math.round((Date.now() - lastIndexedAt) / 60000);
       const age = mins < 1 ? "just now" : `${mins}m ago`;
-      ctx.ui.setWidget("semantic-grep", [`🧠 Semantic: ${indexStats.blocks} blocks • synced ${age}`], { placement: "belowEditor" } as any);
+      ctx.ui.setWidget("semantic-grep", [`🔎 Semantic: ${indexStats.blocks} blocks • synced ${age}`], { placement: "belowEditor" } as any);
     }
     return undefined;
   });
@@ -650,8 +650,8 @@ Replaces bash:
       const res = await buildIndex(cwd, ctx.signal as any);
       if (ctx.hasUI) ctx.ui.setStatus("semantic-grep", undefined);
       if (res) {
-        await ctx.ui.notify(`🧠 Re-indexed: ${res.stats.blocks} blocks from ${res.stats.files} files (${res.took}s) • ${res.stats.model}`, "info");
-        ctx.ui.setWidget("semantic-grep", [`🧠 Semantic: ${res.stats.blocks} blocks • re-indexed just now`], { placement: "belowEditor" } as any);
+        await ctx.ui.notify(`🔎 Re-indexed: ${res.stats.blocks} blocks from ${res.stats.files} files (${res.took}s) • ${res.stats.model}`, "info");
+        ctx.ui.setWidget("semantic-grep", [`🔎 Semantic: ${res.stats.blocks} blocks • re-indexed just now`], { placement: "belowEditor" } as any);
         pi.appendEntry("semantic-stats", { stats: res.stats, lastIndexedAt, model: res.stats.model });
       }
     },
@@ -661,7 +661,7 @@ Replaces bash:
     description: "Show semantic search index status",
     handler: async (_args, ctx) => {
       const age = lastIndexedAt ? `${Math.round((Date.now() - lastIndexedAt) / 60000)}m ago` : "never";
-      const msg = `🧠 Semantic Grep — ${indexStats.blocks} blocks • ${indexStats.files} files • model: ${indexStats.model || "not loaded"} • last: ${age} • embedder: ${embedder?.name ?? "none"}`;
+      const msg = `🔎 Semantic Grep — ${indexStats.blocks} blocks • ${indexStats.files} files • model: ${indexStats.model || "not loaded"} • last: ${age} • embedder: ${embedder?.name ?? "none"}`;
       if (ctx.hasUI) await ctx.ui.notify(msg, "info");
       else console.log(msg);
       // also update widget
@@ -694,7 +694,7 @@ Replaces bash:
       const { Box, Text } = require("@earendil-works/pi-tui");
       const data = entry.data as any;
       const box = new Box(1, 1, (t: any) => theme.bg("customMessageBg", t));
-      box.addChild(new Text(theme.bold(`🧠 Semantic Stats`) + theme.fg("dim", ` • ${data.stats?.blocks ?? 0} blocks`)));
+      box.addChild(new Text(theme.bold(`🔎 Semantic Stats`) + theme.fg("dim", ` • ${data.stats?.blocks ?? 0} blocks`)));
       if (opts.expanded) box.addChild(new Text(theme.fg("dim", JSON.stringify(data, null, 2))));
       return box;
     });

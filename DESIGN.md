@@ -55,7 +55,7 @@ pi
    > `/semantic-reindex` → force rebuild after big refactor
 
 3. **Widget (ambient):**
-   Bottom bar: `🧠 Semantic: 2140 blocks • synced 2m ago` via `ctx.ui.setWidget`. Hidden in `print/json` mode.
+   Bottom bar: `🔎 Semantic: 2140 blocks • synced 2m ago` via `ctx.ui.setWidget`. Hidden in `print/json` mode.
 
 ### Before vs After
 
@@ -181,7 +181,7 @@ Theme tokens only: `theme.fg("accent"/"muted"/"dim")`, `theme.bold`, `highlightC
 
 ### Widget
 
-- `ctx.ui.setWidget("semantic-grep", ["🧠 2140 blocks • synced 2m ago"], {placement:"belowEditor"})`
+- `ctx.ui.setWidget("semantic-grep", ["🔎 2140 blocks • synced 2m ago"], {placement:"belowEditor"})`
 - Guard: `if (ctx.hasUI) setWidget else no-op`
 - `setStatus` variant for indexing: `ctx.ui.setStatus("semantic-grep", "Indexing…")`
 

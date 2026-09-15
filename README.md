@@ -39,7 +39,7 @@ First run:
 - `/semantic-reindex` — rebuild index (up to 500 files, ~1s)
 - `/semantic-status` — blocks, files, model, last sync
 
-**Widget:** `🧠 Semantic: 2140 blocks • synced just now` (hidden in `print` mode).
+**Widget:** `🔎 Semantic: 2140 blocks • synced just now` (hidden in `print` mode).
 
 ## How It Works
 
