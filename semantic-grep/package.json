@@ -12,6 +12,10 @@
   "optionalDependencies": {
     "onnxruntime-node": "^1.18.0"
   },
+  "scripts": {
+    "test": "node ../tests/test-simple.mjs",
+    "test:pi": "pi -e ./index.ts --mode print -p \"hello\""
+  },
   "keywords": ["pi", "pi-extension", "semantic-search", "embeddings", "neural-network"],
   "author": "",
   "license": "MIT"
