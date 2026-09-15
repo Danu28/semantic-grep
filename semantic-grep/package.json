@@ -1,0 +1,18 @@
+{
+  "name": "semantic-grep",
+  "version": "0.1.0",
+  "description": "Pi extension: semantic code search via local neural embeddings (384-dim, 22MB MiniLM) — grep by meaning",
+  "type": "module",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "dependencies": {
+    "@xenova/transformers": "^2.17.0"
+  },
+  "optionalDependencies": {
+    "onnxruntime-node": "^1.18.0"
+  },
+  "keywords": ["pi", "pi-extension", "semantic-search", "embeddings", "neural-network"],
+  "author": "",
+  "license": "MIT"
+}

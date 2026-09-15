@@ -1,0 +1,4 @@
+node_modules/
+model-cache/
+*.log
+.DS_Store
