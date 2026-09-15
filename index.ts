@@ -509,12 +509,12 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  // 2) before_agent_start — inject hint so LLM prefers semantic_search
+  // 2) before_agent_start — inject hint so LLM prefers semantic_search (KV-cache friendly: static prefix, no interpolation)
   pi.on("before_agent_start", async (_event, _ctx) => {
     if (vectors.length === 0) return undefined;
     return {
       systemPrompt:
-        `MUST call semantic_search first for ANY "where is / how does / find code for / locate" question — it is neural, local, and returns file:line with scores (use before bash grep or read). Then read the top hit.`,
+        "SEMANTIC_SEARCH — neural, local 384-dim code search. Returns file:line+score. MUST call semantic_search BEFORE bash grep/read for ANY discovery: where is / how does / find / locate / show / search for code. Batch 2-3 semantic_search calls in one turn like bash batches to save LLM calls (parallel variants), then read top hit. Replaces bash: grep -r \"retry\" => semantic_search(\"retry logic\"); grep -rE \"retry|backoff|jitter|queue\" => semantic_search(\"payment retry queue with jitter\"); find . -name \"*.ts\" | xargs grep -l \"auth\" => semantic_search(\"auth retry\", filterPath:\"src\"); ls -R; cat src/payments/*.ts => semantic_search(\"where handle payment failures\"); rg -n \"validate.*email\" => semantic_search(\"where do we validate email\").",
     };
   });
 
