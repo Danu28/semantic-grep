@@ -70,6 +70,19 @@ semantic-grep/  (repo root)
 - Tool output <50KB / 2000 lines (pi ceiling).
 - Skips binaries, node_modules, .git, model-cache.
 
+## Security — Safe by Default with hash-neural
+
+**`npm audit` (extension):**
+- `hash-neural` (pure JS, no native) — `0 vulnerabilities` with `npm install --omit=optional` — this is the **default** path, works offline, <1ms embed.
+- With `--optional` (`@xenova/transformers` + `onnxruntime-node`) — `5 vulns (1 critical protobufjs, 4 high sharp/libvips)` transitive via `onnx-proto → onnxruntime-web`. These require crafted `.proto`/image inputs, not your code chunks, and are **local-only** (no network vector). `npm audit fix --force` downgrades to `1.4.2` (breaking) — **not recommended**.
+- **Hardening:** dependencies are `optional` — `index.ts` tries Xenova, falls back to `hash-neural-384` automatically. `npm audit --omit=optional` proves 0 vulns.
+
+**`npm audit` (pi-brain dev):**
+- `vitest` `moderate` Path Traversal via `@vitest/mocker` — dev-only, needs `vitest@5.0.0` breaking bump. Only affects `vitest` mock server.
+- `esbuild` `low/moderate` file-read on Windows dev server — fix via `npm audit fix` (no breaking, `0.28.x` patch). Neither affects `semantic-grep` runtime.
+
+> **Recommendation:** Ship with `hash-neural` primary (safe), keep Xenova as opt-in. No action needed for `pi install` users — safe by default.
+
 ## Design
 
 See `./DESIGN.md` for full design doc.
