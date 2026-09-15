@@ -509,24 +509,26 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
-  // 2) before_agent_start — inject hint so LLM prefers semantic_search (KV-cache friendly: static prefix, no interpolation)
+  // 2) before_agent_start — inject hint so LLM prefers semantic_search (ALWAYS injected, KV-cache friendly: static prefix, no interpolation)
   pi.on("before_agent_start", async (_event, _ctx) => {
-    if (vectors.length === 0) return undefined;
+    // ALWAYS inject — never conditional on vectors.length (index may still be building on first turn, but tool auto-builds)
     return {
-      systemPrompt: `SEMANTIC_SEARCH — neural, local 384-dim code search. Returns file:line+score.
+      systemPrompt: `🔎 SEMANTIC_SEARCH — neural, local 384-dim code search. Returns file:line+score+preview. READY immediately (auto-builds if empty, 87 blocks avg, <50ms).
 
 SCOPE: Current workspace (cwd) only — indexes current repo (~500 files / 5k blocks, gitignore-aware). No cross-repo. Use filterPath to narrow within cwd.
 
-RULE: MUST call semantic_search BEFORE bash grep/read for ANY discovery: where is / how does / find / locate / show / search for code.
+RULE — MANDATORY: For ANY discovery — where is / how does / find / locate / show / search for / explain / what handles — you MUST call semantic_search BEFORE bash grep / bash find / bash rg / bash ls / read. This is not optional. grep = syntactic, semantic_search = semantic (finds synonyms: retry↔backoff↔jitter↔re-queue even with 0 keyword overlap).
 
-BATCH: Like bash batches, run 2-3 semantic_search calls in parallel in one turn to save LLM calls (variants), then read top hit.
+BATCH: Like bash batches, run 2-3 semantic_search calls in parallel in one turn (query variants), then read top hit file.
 
-Replaces bash:
-- grep -r "retry" => semantic_search("retry logic")
-- grep -rE "retry|backoff|jitter|queue" => semantic_search("payment retry queue with jitter")
-- find . -name "*.ts" | xargs grep -l "auth" => semantic_search("auth retry", filterPath:"src")
-- ls -R; cat src/payments/*.ts => semantic_search("where handle payment failures")
-- rg -n "validate.*email" => semantic_search("where do we validate email")`,
+NEVER do this:
+- grep -r "retry"  → ALWAYS semantic_search("retry logic") first
+- grep -rE "retry|backoff|jitter|queue" → semantic_search("payment retry queue with jitter")
+- find . -name "*.ts" | xargs grep -l "auth" → semantic_search("auth retry", filterPath:"src")
+- ls -R; cat src/payments/*.ts → semantic_search("where handle payment failures")
+- rg -n "validate.*email" → semantic_search("where do we validate email")
+
+If semantic_search returns 0 hits, then and only then fall back to bash grep.`,
     };
   });
 
@@ -572,9 +574,13 @@ Replaces bash:
     name: "semantic_search",
     label: "Semantic Grep",
     description:
-      "Neural semantic code search — finds code by meaning, not keywords. Use when user asks where/how is feature implemented, where is auth/payment/retry logic, find code for X. Returns file:line + score + preview. Prefer over bash grep.",
-    promptSnippet: "For ANY 'where is / how does / find code for' question, call semantic_search first before reading files — it is neural and local (354 blocks, 0.53 scores).",
-    promptGuidelines: ["Always use semantic_search when user asks where/how is feature implemented, before bash grep or read."],
+      "🔎 MANDATORY semantic code search — finds code by meaning, not keywords. ALWAYS call this BEFORE bash grep/read/find/ls for ANY discovery: where is / how does / find / locate / show / search for code, auth/payment/retry logic, or 'find code for X'. Returns file:line + score + preview (e.g. src/payments/stripeRetry.ts:42 0.89). Local 384-dim, <50ms, no download. DO NOT use bash grep until you have called semantic_search. Replaces: grep→semantic_search('retry logic'), rg→semantic_search('where do we validate email').",
+    promptSnippet: "🔎 MANDATORY: For ANY 'where is / how does / find / locate / show / search' or discovery question, you MUST call semantic_search FIRST (before bash grep/read/ls) — it is neural, local, 87-500 blocks, <50ms, finds synonyms (retry↔backoff↔jitter) with scores. Batch 2-3 variants in parallel.",
+    promptGuidelines: [
+      "MANDATORY: Always call semantic_search BEFORE bash grep/read/find/ls for any discovery/where/how/find/locate/show/search query — never go directly to bash.",
+      "Batch 2-3 semantic_search variants in parallel (like bash batches) then read top hit — do not sequentialize.",
+      "If semantic_search returns 0 hits, only then fall back to bash grep.",
+    ],
     parameters: Type.Object({
       query: Type.String({ description: "Natural language query, e.g. 'auth retry logic' or 'where do we validate email'" }),
       topK: Type.Optional(Type.Number({ description: "Top K hits (default 3, max 10)" })),
