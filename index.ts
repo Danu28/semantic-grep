@@ -513,8 +513,18 @@ export default function (pi: ExtensionAPI) {
   pi.on("before_agent_start", async (_event, _ctx) => {
     if (vectors.length === 0) return undefined;
     return {
-      systemPrompt:
-        "SEMANTIC_SEARCH — neural, local 384-dim code search. Returns file:line+score. MUST call semantic_search BEFORE bash grep/read for ANY discovery: where is / how does / find / locate / show / search for code. Batch 2-3 semantic_search calls in one turn like bash batches to save LLM calls (parallel variants), then read top hit. Replaces bash: grep -r \"retry\" => semantic_search(\"retry logic\"); grep -rE \"retry|backoff|jitter|queue\" => semantic_search(\"payment retry queue with jitter\"); find . -name \"*.ts\" | xargs grep -l \"auth\" => semantic_search(\"auth retry\", filterPath:\"src\"); ls -R; cat src/payments/*.ts => semantic_search(\"where handle payment failures\"); rg -n \"validate.*email\" => semantic_search(\"where do we validate email\").",
+      systemPrompt: `SEMANTIC_SEARCH — neural, local 384-dim code search. Returns file:line+score.
+
+RULE: MUST call semantic_search BEFORE bash grep/read for ANY discovery: where is / how does / find / locate / show / search for code.
+
+BATCH: Like bash batches, run 2-3 semantic_search calls in parallel in one turn to save LLM calls (variants), then read top hit.
+
+Replaces bash:
+- grep -r "retry" => semantic_search("retry logic")
+- grep -rE "retry|backoff|jitter|queue" => semantic_search("payment retry queue with jitter")
+- find . -name "*.ts" | xargs grep -l "auth" => semantic_search("auth retry", filterPath:"src")
+- ls -R; cat src/payments/*.ts => semantic_search("where handle payment failures")
+- rg -n "validate.*email" => semantic_search("where do we validate email")`,
     };
   });
 
