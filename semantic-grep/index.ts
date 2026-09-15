@@ -514,7 +514,7 @@ export default function (pi: ExtensionAPI) {
     if (vectors.length === 0) return undefined;
     return {
       systemPrompt:
-        `You have a tool semantic_search (neural, local) — prefer it over bash grep when the user asks "where is X", "how does Y work", "find code for Z". It returns file:line with scores; then read the top hit.`,
+        `MUST call semantic_search first for ANY "where is / how does / find code for / locate" question — it is neural, local, and returns file:line with scores (use before bash grep or read). Then read the top hit.`,
     };
   });
 
@@ -561,6 +561,8 @@ export default function (pi: ExtensionAPI) {
     label: "Semantic Grep",
     description:
       "Neural semantic code search — finds code by meaning, not keywords. Use when user asks where/how is feature implemented, where is auth/payment/retry logic, find code for X. Returns file:line + score + preview. Prefer over bash grep.",
+    promptSnippet: "For ANY 'where is / how does / find code for' question, call semantic_search first before reading files — it is neural and local (354 blocks, 0.53 scores).",
+    promptGuidelines: ["Always use semantic_search when user asks where/how is feature implemented, before bash grep or read."],
     parameters: Type.Object({
       query: Type.String({ description: "Natural language query, e.g. 'auth retry logic' or 'where do we validate email'" }),
       topK: Type.Optional(Type.Number({ description: "Top K hits (default 3, max 10)" })),
