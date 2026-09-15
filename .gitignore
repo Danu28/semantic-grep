@@ -2,21 +2,12 @@
 node_modules/
 .pnp
 .pnp.js
-package-lock.json
-yarn.lock
 pnpm-lock.yaml
-
-# But keep semantic-grep lock for reproducibility (un-ignore)
-!semantic-grep/package-lock.json
-!semantic-grep/yarn.lock
+# package-lock.json and yarn.lock intentionally NOT ignored — keep lock for reproducibility
 
 # ── Pi local state (596M vendor, cache) ──
 .pi/
 model-cache/
-semantic-grep/model-cache/
-semantic-grep/node_modules/
-semantic-grep/dist/
-semantic-grep/build/
 
 # ── Build outputs ──
 dist/

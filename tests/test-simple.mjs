@@ -26,7 +26,7 @@ function cosine(a,b){let d=0;for(let i=0;i<a.length;i++)d+=a[i]*b[i];return d;}
 console.log("=== Semantic Grep — Simple Test ===\n");
 
 // 1. Factory & registrations (static check)
-const indexText = await fs.readFile("semantic-grep/index.ts","utf8");
+const indexText = await fs.readFile("index.ts","utf8");
 ok("index.ts exists and exports default", indexText.includes("export default function"));
 ok("registers semantic_search tool", indexText.includes('name: "semantic_search"'));
 ok("registers 3 commands", indexText.includes("semantic-search") && indexText.includes("semantic-reindex") && indexText.includes("semantic-status"));
@@ -36,7 +36,7 @@ ok("hooks tool_result", indexText.includes('pi.on("tool_result"'));
 ok("branch-safe via details.snapshot", indexText.includes("snapshot") && indexText.includes("getBranch"));
 ok("widget + entry renderer", indexText.includes("setWidget") && indexText.includes("registerEntryRenderer"));
 ok("neural engine 384-dim", indexText.includes("DIM = 384") || indexText.includes("DIM=384"));
-ok("package.json has pi.extensions", JSON.parse(await fs.readFile("semantic-grep/package.json","utf8")).pi.extensions.includes("./index.ts"));
+ok("package.json has pi.extensions", JSON.parse(await fs.readFile("package.json","utf8")).pi.extensions.includes("./index.ts"));
 
 // 2. Neural determinism
 const e1=hashNeuralEmbed("auth retry logic");
@@ -127,7 +127,7 @@ ok("pi binary available", piAvailable, `npx pi --help exit ${piHelp.status}`);
 if(piAvailable){
   ok("pi --help mentions extensions", piHelp.stdout.includes("extension") || piHelp.stdout.includes("--help") || true, "(help output checked)");
   // try load extension in print mode — pi will wait for LLM, so timeout is expected; success = no immediate crash + "Loaded" marker
-  const piLoad=spawnSync("npx", ["pi", "-e", "./semantic-grep/index.ts", "--mode", "print", "-p", "hello"], {encoding:"utf8", timeout:12000, shell:true, cwd: process.cwd()});
+  const piLoad=spawnSync("npx", ["pi", "-e", "./index.ts", "--mode", "print", "-p", "hello"], {encoding:"utf8", timeout:12000, shell:true, cwd: process.cwd()});
   const out = (piLoad.stdout||"") + (piLoad.stderr||"");
   const didLoad = out.includes("Loaded") || out.includes("semantic") || piLoad.status===0;
   const loadOk = piLoad.status!==null ? didLoad : didLoad; // timeout with Loaded is still success

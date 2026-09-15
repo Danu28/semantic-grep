@@ -11,15 +11,18 @@
 ## Install
 
 ```bash
-# global (all projects)
-cp -r semantic-grep ~/.pi/agent/extensions/
-cd ~/.pi/agent/extensions/semantic-grep && npm install
-
-# project-local (requires trust)
-cp -r semantic-grep .pi/extensions/
-cd .pi/extensions/semantic-grep && npm install
-
+# via pi (recommended) — installs from GitHub
+pi install git:github.com/Danu28/semantic-grep
+# then
+npm --prefix $(pi extensions path)/semantic-grep install  # if needed
 pi
+
+# manual / local dev
+npm install
+pi -e ./index.ts --mode print -p "hello"  # smoke test
+
+# alternative manual copy
+# cp -r . ~/.pi/agent/extensions/semantic-grep && npm --prefix ~/.pi/agent/extensions/semantic-grep install
 ```
 
 First run:
@@ -53,10 +56,12 @@ Fallback: self-contained **hash-neural 384** — hash buckets + tiny MLP (`tanh(
 ## Structure
 
 ```
-semantic-grep/
+semantic-grep/  (repo root)
 ├── index.ts       # ExtensionAPI factory — registers tool, commands, renderers
-├── package.json   # deps: @xenova/transformers
-└── model-cache/   # .gitignored
+├── package.json   # pi.extensions: ["./index.ts"] deps: @xenova/transformers
+├── DESIGN.md      # full design doc
+├── tests/         # sample repo + test harness
+└── model-cache/   # .gitignored, populated at runtime
 ```
 
 ## Limits
@@ -67,4 +72,4 @@ semantic-grep/
 
 ## Design
 
-See `../DESIGN.md` for full design doc.
+See `./DESIGN.md` for full design doc.
